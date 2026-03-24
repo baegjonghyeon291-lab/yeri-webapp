@@ -138,11 +138,19 @@ a { text-decoration: none; color: inherit; }
 
 /* ── 모바일 (<768px) ── */
 @media (max-width: 767px) {
-  /* 데스크톱 aside 사이드바를 모바일에서 완전히 숨김 */
-  /* (Sidebar.tsx가 내부적으로 드로어 모드로 전환) */
-
-  /* 본문 최상단 여백 — 고정 헤더(52px) 보정 */
+  /* 터치 스크롤 허용 */
   main > * { touch-action: pan-y; }
+
+  /* ── safe-area 하단 보정 ── */
+  /* PWA standalone + 노치 기기 홈인디케이터 잘림 방지 */
+  main {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* 헤더 바로 아래 첫 번째 자식에 상단 여백 확보 */
+  main > div:first-child {
+    padding-top: max(12px, env(safe-area-inset-top, 0px));
+  }
 
   /* 퀵버튼 터치 영역 확장 */
   .quick-scroll button {
@@ -151,6 +159,14 @@ a { text-decoration: none; color: inherit; }
     min-height: 36px;
   }
 
-  /* 텍스트 영역 터치 최적화 */
-  textarea { font-size: 16px !important; } /* iOS 자동 줌 방지 */
+  /* 텍스트 영역 — iOS 자동 줌 방지 */
+  textarea, input { font-size: 16px !important; }
+}
+
+/* ── PWA standalone 모드 추가 보정 ── */
+@media (display-mode: standalone) {
+  /* standalone에서 safe-area 재확인 */
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 }

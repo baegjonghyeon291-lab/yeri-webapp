@@ -50,9 +50,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body style={{
         display: 'flex', height: '100dvh', overflow: 'hidden',
         background: 'var(--bg-primary)',
-        /* iOS safe-area 대응 */
-        paddingTop: 'env(safe-area-inset-top)',
-        paddingBottom: 'env(safe-area-inset-bottom)',
       }}>
         <Sidebar />
         <main className="flex-1 overflow-hidden" style={{ minWidth: 0 }}>

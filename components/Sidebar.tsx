@@ -164,13 +164,16 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* 모바일 상단 헤더 */}
+      {/* 모바일 상단 헤더 — safe-area-inset-top 직접 적용 */}
       <header style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 200,
-        height: 52, background: "#fff",
+        height: "calc(52px + env(safe-area-inset-top))",
+        paddingTop: "env(safe-area-inset-top)",
+        paddingLeft: 16, paddingRight: 16, paddingBottom: 0,
+        background: "#fff",
         borderBottom: "1px solid var(--border)",
-        display: "flex", alignItems: "center",
-        padding: "0 16px", gap: 12,
+        display: "flex", alignItems: "flex-end",
+        gap: 12,
         boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
       }}>
         {/* 햄버거 버튼 */}
@@ -308,8 +311,8 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* 모바일 본문 상단 여백 (헤더 height만큼) */}
-      <div style={{ height: 52, flexShrink: 0 }} />
+      {/* 모바일 본문 상단 여백 — 헤더 + safe-area 만큼 */}
+      <div style={{ height: "calc(52px + env(safe-area-inset-top))", flexShrink: 0 }} />
 
       <style>{`
         @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
