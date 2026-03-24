@@ -117,20 +117,31 @@ export default function Sidebar() {
         display: "flex", flexDirection: "column",
         padding: "20px 0 16px", flexShrink: 0,
       }}>
-        {/* 로고 */}
-        <div style={{ padding: "0 16px 24px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-            <div style={{
-              width: 34, height: 34, borderRadius: 10,
-              background: "linear-gradient(135deg, #2ea85a 0%, #3fca6b 100%)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 18, boxShadow: "0 2px 8px rgba(63,202,107,0.3)", flexShrink: 0,
-            }}>📈</div>
-            <div>
-              <div style={{ fontWeight: 800, fontSize: 14, color: "#1a2233" }}>예리</div>
-              <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 1 }}>AI 투자 어시스턴트</div>
-            </div>
+        {/* 데스크톱 로고 */}
+        <div style={{ padding: "0 14px 24px" }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 0,
+            cursor: "default",
+          }}>
+            <span style={{
+              fontFamily: "'Georgia', 'Noto Serif KR', serif",
+              fontStyle: "italic",
+              fontWeight: 800,
+              fontSize: 22,
+              letterSpacing: "-0.5px",
+              color: "#1a3a2a",
+              lineHeight: 1,
+              transition: "transform 0.2s",
+            }}>예리</span>
+            <span style={{
+              fontSize: 20,
+              color: "var(--accent)",
+              marginLeft: 1,
+              lineHeight: 1,
+              filter: "drop-shadow(0 1px 2px rgba(63,202,107,0.4))",
+            }}>♥</span>
           </div>
+          <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 3, paddingLeft: 1, letterSpacing: "0.04em" }}>AI 투자 어시스턴트</div>
         </div>
 
         <nav style={{ flex: 1, padding: "0 8px" }}>
@@ -182,10 +193,21 @@ export default function Sidebar() {
           ))}
         </button>
 
-        {/* 로고 */}
-        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-          <span style={{ fontSize: 18 }}>📈</span>
-          <span style={{ fontWeight: 800, fontSize: 15, color: "#1a2233" }}>예리</span>
+        {/* 모바일 헤더 로고 */}
+        <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
+          <span style={{
+            fontFamily: "'Georgia', 'Noto Serif KR', serif",
+            fontStyle: "italic",
+            fontWeight: 800,
+            fontSize: 20,
+            color: "#1a3a2a",
+            letterSpacing: "-0.3px",
+            lineHeight: 1,
+          }}>예리</span>
+          <span style={{
+            fontSize: 18, color: "var(--accent)", marginLeft: 1,
+            filter: "drop-shadow(0 1px 2px rgba(63,202,107,0.4))",
+          }}>♥</span>
         </div>
 
         {/* 현재 페이지 이름 */}
@@ -250,17 +272,20 @@ export default function Sidebar() {
           padding: "0 16px 20px",
           borderBottom: "1px solid var(--border)", marginBottom: 12,
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-            <div style={{
-              width: 34, height: 34, borderRadius: 10,
-              background: "linear-gradient(135deg, #2ea85a 0%, #3fca6b 100%)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 18, boxShadow: "0 2px 8px rgba(63,202,107,0.3)",
-            }}>📈</div>
-            <div>
-              <div style={{ fontWeight: 800, fontSize: 14, color: "#1a2233" }}>예리</div>
-              <div style={{ fontSize: 10, color: "var(--text-muted)" }}>AI 투자 어시스턴트</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
+              <span style={{
+                fontFamily: "'Georgia', 'Noto Serif KR', serif",
+                fontStyle: "italic",
+                fontWeight: 800, fontSize: 22,
+                color: "#1a3a2a", letterSpacing: "-0.5px", lineHeight: 1,
+              }}>예리</span>
+              <span style={{
+                fontSize: 20, color: "var(--accent)", marginLeft: 1,
+                filter: "drop-shadow(0 1px 2px rgba(63,202,107,0.4))",
+              }}>♥</span>
             </div>
+            <div style={{ fontSize: 10, color: "var(--text-muted)", letterSpacing: "0.04em" }}>AI 투자 어시스턴트</div>
           </div>
           {/* 닫기 버튼 */}
           <button
