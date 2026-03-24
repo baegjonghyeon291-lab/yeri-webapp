@@ -135,3 +135,22 @@ body {
 
 /* ── 링크 ── */
 a { text-decoration: none; color: inherit; }
+
+/* ── 모바일 (<768px) ── */
+@media (max-width: 767px) {
+  /* 데스크톱 aside 사이드바를 모바일에서 완전히 숨김 */
+  /* (Sidebar.tsx가 내부적으로 드로어 모드로 전환) */
+
+  /* 본문 최상단 여백 — 고정 헤더(52px) 보정 */
+  main > * { touch-action: pan-y; }
+
+  /* 퀵버튼 터치 영역 확장 */
+  .quick-scroll button {
+    padding: 8px 16px !important;
+    font-size: 13px !important;
+    min-height: 36px;
+  }
+
+  /* 텍스트 영역 터치 최적화 */
+  textarea { font-size: 16px !important; } /* iOS 자동 줌 방지 */
+}

@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { getSessionId } from "@/lib/session";
 
 const API = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001";
-const CHAT_ID = "web-default";
 
 const STYLES = ["단타", "스윙", "장기"] as const;
 type Style = (typeof STYLES)[number];
@@ -14,15 +15,48 @@ const styleInfo: Record<Style, { icon: string; desc: string }> = {
 };
 
 export default function WatchlistPage() {
+  const router = useRouter();
+  const [sessionId, setSessionId] = useState("");
+  useEffect(() => { setSessionId(getSessionId()); }, []);
   const [list, setList] = useState<string[]>([]);
   const [style, setStyle] = useState<Style>("스윙");
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState("");
+  const [dismissed, setDismissed] = useState<Set<number>>(new Set());
+
+  // ── 알림 상태 ──────────────────────────────────────────
+  type Alert = { emoji: string; title: string; desc: string; level: string; ticker: string };
+  type StockStatus = { ticker: string; name: string; price: number | null; priceStr: string; changePct: number | null; rsi: number | null; score: number; verdict: string; suggestedAction: string; priceSource: string; error?: string };
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [stocks, setStocks] = useState<StockStatus[]>([]);
+  const [alertLoading, setAlertLoading] = useState(false);
+  const [alertUpdated, setAlertUpdated] = useState<Date | null>(null);
+
+  async function fetchAlerts(refresh = false) {
+    if (!sessionId) return;
+    setAlertLoading(true);
+    try {
+      const url = `${API}/api/alerts/${sessionId}${refresh ? "?refresh=true" : ""}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.ok) {
+        setAlerts(data.alerts || []);
+        setStocks(data.stocks || []);
+        setAlertUpdated(new Date());
+      }
+    } catch { /* 무시 */ } finally { setAlertLoading(false); }
+  }
+
+  useEffect(() => { if (sessionId) fetchAlerts(); }, [sessionId]);
+  useEffect(() => {
+    const t = setInterval(() => fetchAlerts(), 5 * 60 * 1000);
+    return () => clearInterval(t);
+  }, [sessionId]);
 
   async function load() {
     try {
-      const res = await fetch(`${API}/api/watchlist/${CHAT_ID}`);
+      const res = await fetch(`${API}/api/watchlist/${sessionId}`);
       const data = await res.json();
       setList(data.list || []);
       const s = data.style;
@@ -41,7 +75,7 @@ export default function WatchlistPage() {
     if (!input.trim() || loading) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API}/api/watchlist/${CHAT_ID}/add`, {
+      const res = await fetch(`${API}/api/watchlist/${sessionId}/add`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ticker: input.trim().toUpperCase() }),
@@ -56,7 +90,7 @@ export default function WatchlistPage() {
   }
 
   async function remove(ticker: string) {
-    await fetch(`${API}/api/watchlist/${CHAT_ID}/remove`, {
+    await fetch(`${API}/api/watchlist/${sessionId}/remove`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ticker }),
@@ -65,7 +99,7 @@ export default function WatchlistPage() {
   }
 
   async function changeStyle(s: Style) {
-    await fetch(`${API}/api/watchlist/${CHAT_ID}/style`, {
+    await fetch(`${API}/api/watchlist/${sessionId}/style`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ style: s }),
@@ -76,7 +110,6 @@ export default function WatchlistPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg-app)" }}>
 
-      {/* 헤더 */}
       <div style={{
         padding: "14px 24px",
         background: "#fff",
@@ -84,11 +117,141 @@ export default function WatchlistPage() {
         flexShrink: 0,
         boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
       }}>
-        <div style={{ fontWeight: 800, fontSize: 16, color: "var(--text-primary)" }}>⭐ 관심종목</div>
-        <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>
-          30분마다 자동 감시 · 신호 발생 시 알림
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: 16, color: "var(--text-primary)" }}>⭐ 관심종목</div>
+            <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>
+              브라우저 세션 기준 · 변화 자동 감지
+            </div>
+          </div>
+          {/* 알림 새로고침 버튼 */}
+          <button
+            onClick={() => fetchAlerts(true)}
+            disabled={alertLoading}
+            style={{
+              padding: "5px 12px", borderRadius: 20, border: "1px solid var(--border)",
+              background: "#f5f7fa", color: "var(--text-secondary)",
+              fontSize: 11, cursor: alertLoading ? "not-allowed" : "pointer",
+              opacity: alertLoading ? 0.6 : 1, transition: "all 0.15s",
+            }}
+          >
+            {alertLoading ? "스캔 중..." : "🔄 알림 새로고침"}
+          </button>
         </div>
       </div>
+
+      {alerts.length > 0 && (
+        <div style={{
+          padding: "12px 16px", background: "#fffbf0",
+          borderBottom: "1px solid #fde68a",
+          flexShrink: 0, maxHeight: 280, overflowY: "auto",
+        }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: "#92400e", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+            🔔 새 변화 감지
+            <span style={{ fontWeight: 400, color: "#b45309" }}>
+              {alertUpdated && `(${alertUpdated.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })})`}
+            </span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {alerts.map((a, i) => {
+              if (dismissed.has(i)) return null;
+
+              // ── 레벨별 색상 ──────────────────────────────
+              const isHigh = a.level === "HIGH";
+              const isMed  = a.level === "MEDIUM";
+              const borderColor = isHigh ? "#ef4444" : isMed ? "#f59e0b" : "#6b7280";
+              const bgColor     = isHigh ? "#fff5f5" : isMed ? "#fffbf0" : "#f9fafb";
+              const tagBg       = isHigh ? "#fee2e2" : isMed ? "#fef3c7" : "#f3f4f6";
+              const tagColor    = isHigh ? "#dc2626" : isMed ? "#d97706" : "#374151";
+
+              return (
+                <div key={i} style={{
+                  background: bgColor,
+                  borderRadius: 12,
+                  border: `1px solid ${borderColor}30`,
+                  borderLeft: `4px solid ${borderColor}`,
+                  padding: "10px 12px",
+                  boxShadow: isHigh ? `0 2px 8px ${borderColor}20` : "none",
+                }}>
+                  {/* 상단: 이모지 + 제목 + 레벨 태그 */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                    <span style={{ fontSize: isHigh ? 18 : 15 }}>{a.emoji}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-primary)", flex: 1 }}>
+                      <span style={{
+                        display: "inline-block", background: "#ecfdf5", color: "#059669",
+                        borderRadius: 4, fontSize: 10, fontWeight: 700, padding: "1px 5px", marginRight: 5,
+                      }}>{a.ticker}</span>
+                      {a.title.replace(a.ticker, "").trim()}
+                    </span>
+                    <span style={{
+                      background: tagBg, color: tagColor,
+                      borderRadius: 4, fontSize: 9, fontWeight: 700,
+                      padding: "1px 6px", flexShrink: 0,
+                    }}>{a.level}</span>
+                  </div>
+
+                  {/* 설명 */}
+                  <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 8, paddingLeft: 24 }}>
+                    {a.desc}
+                  </div>
+
+                  {/* ── 액션 버튼 3개 ──────────────────────── */}
+                  <div style={{ display: "flex", gap: 6, paddingLeft: 24 }}>
+                    {/* 분석하기 */}
+                    <button
+                      onClick={() => router.push(`/chat?analyze=${a.ticker}`)}
+                      style={{
+                        padding: "4px 10px", borderRadius: 20, border: "none",
+                        background: isHigh ? "#ef4444" : "var(--accent)",
+                        color: "#fff", fontSize: 11, fontWeight: 700,
+                        cursor: "pointer", transition: "opacity .15s",
+                      }}
+                      onMouseOver={e => (e.currentTarget.style.opacity = "0.82")}
+                      onMouseOut={e  => (e.currentTarget.style.opacity = "1")}
+                    >
+                      🔍 분석하기
+                    </button>
+
+                    {/* 관심종목 추가 (이미 있는 경우 비활성) */}
+                    {!list.includes(a.ticker) && (
+                      <button
+                        onClick={async () => {
+                          await fetch(`${API}/api/watchlist/${sessionId}/add`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ ticker: a.ticker }),
+                          });
+                          load();
+                          showToast(`⭐ ${a.ticker} 관심종목 추가!`);
+                        }}
+                        style={{
+                          padding: "4px 10px", borderRadius: 20,
+                          border: "1px solid var(--border)", background: "#fff",
+                          color: "var(--text-secondary)", fontSize: 11, cursor: "pointer",
+                        }}
+                      >
+                        ⭐ 관심종목 추가
+                      </button>
+                    )}
+
+                    {/* 무시 */}
+                    <button
+                      onClick={() => setDismissed(prev => new Set([...prev, i]))}
+                      style={{
+                        padding: "4px 10px", borderRadius: 20,
+                        border: "1px solid #e5e7eb", background: "transparent",
+                        color: "#9ca3af", fontSize: 11, cursor: "pointer", marginLeft: "auto",
+                      }}
+                    >
+                      무시
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* 투자 스타일 탭 */}
       <div style={{
@@ -126,64 +289,143 @@ export default function WatchlistPage() {
       </div>
 
       {/* 목록 */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "16px 24px" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "16px 16px" }}>
+        {alertLoading && !alertUpdated && list.length > 0 && (
+          <div style={{ textAlign: "center", padding: "24px 0", color: "var(--text-muted)", fontSize: 12 }}>
+            ⏳ 종목 데이터 불러오는 중...
+          </div>
+        )}
         {list.length === 0 ? (
-          <div style={{
-            textAlign: "center", padding: "64px 0",
-            color: "var(--text-muted)",
-          }}>
+          <div style={{ textAlign: "center", padding: "64px 0", color: "var(--text-muted)" }}>
             <div style={{ fontSize: 44, marginBottom: 14 }}>📭</div>
             <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text-secondary)" }}>관심 종목이 없어요</div>
-            <div style={{ fontSize: 12, marginTop: 6 }}>아래 입력창에서 티커를 추가해보세요</div>
+            <div style={{ fontSize: 12, marginTop: 6 }}>
+              아래 입력창에서 티커를 추가하면<br />가격·RSI·AI점수를 바로 확인할 수 있어요
+            </div>
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {list.map((ticker, i) => (
-              <div key={ticker} style={{
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "14px 16px",
-                background: "#fff",
-                borderRadius: 14,
-                border: "1px solid var(--border)",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{
-                    width: 30, height: 30, borderRadius: 10,
-                    background: "var(--accent-light)",
-                    border: "1px solid #c8efd8",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    color: "var(--nav-active-color)",
-                    fontWeight: 800, fontSize: 12, flexShrink: 0,
-                  }}>
-                    {i + 1}
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: 14, color: "var(--text-primary)", letterSpacing: "0.02em" }}>
-                      {ticker}
-                    </div>
-                    <span style={{
-                      display: "inline-block", marginTop: 3,
-                      fontSize: 10, padding: "1px 7px", borderRadius: 10,
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {list.map((ticker, i) => {
+              const st = stocks.find(s => s.ticker === ticker);
+              const hasAlert = alerts.some(a => a.ticker === ticker && !dismissed.has(alerts.indexOf(a)));
+              const changePct = st?.changePct ?? null;
+              const isUp = changePct !== null && changePct > 0;
+              const isDown = changePct !== null && changePct < 0;
+              const rsi = st?.rsi ?? null;
+              const rsiColor = rsi !== null
+                ? rsi < 30 ? "#059669" : rsi > 70 ? "#dc2626" : "var(--text-muted)"
+                : "var(--text-muted)";
+
+              return (
+                <div key={ticker} style={{
+                  background: "#fff",
+                  borderRadius: 14,
+                  border: hasAlert ? "1.5px solid #fca5a5" : "1px solid var(--border)",
+                  boxShadow: hasAlert ? "0 2px 8px rgba(239,68,68,0.08)" : "0 1px 3px rgba(0,0,0,0.04)",
+                  padding: "14px 16px",
+                  transition: "box-shadow 0.15s",
+                }}>
+                  {/* 상단: 번호 + 티커 + 알림 도트 + 삭제 */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: st ? 10 : 0 }}>
+                    <div style={{
+                      width: 28, height: 28, borderRadius: 8,
                       background: "var(--accent-light)", border: "1px solid #c8efd8",
-                      color: "var(--nav-active-color)", fontWeight: 600,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      color: "var(--nav-active-color)", fontWeight: 800, fontSize: 11, flexShrink: 0,
                     }}>
-                      감시 중
-                    </span>
+                      {i + 1}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ fontWeight: 700, fontSize: 14, color: "var(--text-primary)" }}>{ticker}</span>
+                        {hasAlert && (
+                          <span style={{
+                            width: 7, height: 7, borderRadius: "50%",
+                            background: "#ef4444", display: "inline-block",
+                            animation: "alertPulse 2s infinite",
+                          }} title="새 알림 있음" />
+                        )}
+                      </div>
+                      {st?.verdict && (
+                        <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>
+                          {st.verdict} · {st.suggestedAction}
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => remove(ticker)}
+                      style={{
+                        padding: "4px 10px", borderRadius: 20,
+                        border: "1px solid #f5c2cc", background: "#fff8f8",
+                        color: "#d64060", cursor: "pointer", fontSize: 11, fontWeight: 500, flexShrink: 0,
+                      }}
+                    >
+                      삭제
+                    </button>
                   </div>
+
+                  {/* 하단: 가격/RSI/AI점수/분석하기 */}
+                  {st && !st.error && (
+                    <div style={{
+                      display: "flex", alignItems: "center", gap: 8,
+                      paddingTop: 8, borderTop: "1px solid #f3f4f6",
+                      flexWrap: "wrap",
+                    }}>
+                      {/* 가격 */}
+                      <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>
+                        {st.priceStr || "N/A"}
+                      </span>
+                      {changePct !== null && (
+                        <span style={{
+                          fontSize: 11, fontWeight: 600,
+                          color: isUp ? "#059669" : isDown ? "#dc2626" : "var(--text-muted)",
+                          background: isUp ? "#ecfdf5" : isDown ? "#fff5f5" : "#f9fafb",
+                          borderRadius: 5, padding: "1px 6px",
+                        }}>
+                          {isUp ? "+" : ""}{changePct.toFixed(2)}%
+                        </span>
+                      )}
+                      {/* RSI */}
+                      <span style={{
+                        fontSize: 11, color: rsiColor, fontWeight: 600,
+                        background: "#f9fafb", borderRadius: 5, padding: "1px 6px",
+                      }}>
+                        RSI {rsi !== null ? rsi.toFixed(1) : "—"}
+                        {rsi !== null && rsi < 30 ? " 과매도" : rsi !== null && rsi > 70 ? " 과매수" : ""}
+                      </span>
+                      {/* AI점수 */}
+                      <span style={{
+                        fontSize: 11, color: "var(--text-muted)",
+                        background: "#f9fafb", borderRadius: 5, padding: "1px 6px",
+                      }}>
+                        AI {st.score}/40
+                      </span>
+                      {/* 분석하기 */}
+                      <button
+                        onClick={() => router.push(`/chat?analyze=${ticker}`)}
+                        style={{
+                          marginLeft: "auto", padding: "3px 10px", borderRadius: 20, border: "none",
+                          background: "var(--accent)", color: "#fff",
+                          fontSize: 11, fontWeight: 700, cursor: "pointer",
+                          transition: "opacity .15s",
+                        }}
+                        onMouseOver={e => (e.currentTarget.style.opacity = "0.82")}
+                        onMouseOut={e => (e.currentTarget.style.opacity = "1")}
+                      >
+                        🔍 분석
+                      </button>
+                    </div>
+                  )}
+                  {/* 스캔 대기 상태 */}
+                  {!st && alertUpdated && (
+                    <div style={{ fontSize: 11, color: "var(--text-muted)", paddingTop: 6, borderTop: "1px solid #f3f4f6" }}>
+                      데이터 준비 중 — 알림 새로고침 후 표시됩니다
+                    </div>
+                  )}
+                  <style>{`@keyframes alertPulse { 0%,100% { box-shadow:0 0 0 0 rgba(239,68,68,.5); } 50% { box-shadow:0 0 0 5px rgba(239,68,68,0); } }`}</style>
                 </div>
-                <button
-                  onClick={() => remove(ticker)}
-                  style={{
-                    padding: "5px 11px", borderRadius: 20,
-                    border: "1px solid #f5c2cc", background: "#fff8f8",
-                    color: "#d64060", cursor: "pointer", fontSize: 11, fontWeight: 500,
-                  }}
-                >
-                  삭제
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

@@ -1,88 +1,300 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { getSessionId } from "@/lib/session";
+
+const API = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001";
 
 const navItems = [
-  { href: "/chat", icon: "💬", label: "채팅 분석" },
+  { href: "/chat",      icon: "💬", label: "채팅 분석" },
   { href: "/watchlist", icon: "⭐", label: "관심종목" },
-  { href: "/briefing", icon: "📊", label: "브리핑" },
+  { href: "/briefing",  icon: "📊", label: "브리핑" },
   { href: "/portfolio", icon: "🗂️", label: "포트폴리오" },
 ];
 
 export default function Sidebar() {
-  const pathname = usePathname();
-  return (
-    <aside
-      style={{
-        width: 192,
-        background: "var(--bg-sidebar)",
+  const pathname  = usePathname();
+  const router    = useRouter();
+  const [open, setOpen]         = useState(false);
+  const [alertCount, setAlertCount] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // 모바일 감지
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  // 라우트 변경 시 드로어 닫기
+  useEffect(() => { setOpen(false); }, [pathname]);
+
+  // 알림 배지 폴링
+  useEffect(() => {
+    const sessionId = getSessionId();
+    async function fetchBadge() {
+      try {
+        const res = await fetch(`${API}/api/alerts/${sessionId}/summary`);
+        const data = await res.json();
+        if (data.ok) setAlertCount(data.alertCount || 0);
+      } catch { /* 무시 */ }
+    }
+    fetchBadge();
+    const t = setInterval(fetchBadge, 5 * 60 * 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  // ── 공통 nav 아이템 ────────────────────────────────────────────
+  const NavItem = ({ item }: { item: typeof navItems[0] }) => {
+    const active      = pathname.startsWith(item.href);
+    const isWatchlist = item.href === "/watchlist";
+
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => router.push(item.href)}
+        onKeyDown={e => e.key === "Enter" && router.push(item.href)}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "12px 16px",
+          borderRadius: 12,
+          marginBottom: 4,
+          background: active ? "var(--nav-active-bg)" : "transparent",
+          color: active ? "var(--nav-active-color)" : "var(--text-secondary)",
+          fontWeight: active ? 700 : 400,
+          fontSize: 14,
+          cursor: "pointer",
+          userSelect: "none",
+          WebkitTapHighlightColor: "transparent",
+          transition: "background 0.15s, color 0.15s",
+          // 터치 영역 최소 48px 확보
+          minHeight: 48,
+          // 활성 탭 왼쪽 강조 바
+          borderLeft: active ? "3px solid var(--accent)" : "3px solid transparent",
+          paddingLeft: active ? 13 : 16,
+          position: "relative",
+        }}
+      >
+        <span style={{ fontSize: 20, lineHeight: 1, flexShrink: 0 }}>{item.icon}</span>
+        <span style={{ flex: 1 }}>{item.label}</span>
+
+        {/* 알림 배지 */}
+        {isWatchlist && alertCount > 0 && (
+          <span style={{
+            background: "#ef4444", color: "#fff",
+            borderRadius: 999, fontSize: 10, fontWeight: 700,
+            minWidth: 18, height: 18,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: "0 5px", animation: "alertPulse 2s infinite",
+          }}>
+            {alertCount}
+          </span>
+        )}
+
+        {/* 현재 탭 활성 도트 */}
+        {active && (
+          <span style={{
+            position: "absolute", right: 10,
+            width: 6, height: 6, borderRadius: "50%",
+            background: "var(--accent)",
+          }} />
+        )}
+      </div>
+    );
+  };
+
+  // ── 데스크톱 사이드바 ────────────────────────────────────────────
+  if (!isMobile) {
+    return (
+      <aside style={{
+        width: 192, background: "var(--bg-sidebar)",
         borderRight: "1px solid var(--border)",
-        display: "flex",
-        flexDirection: "column",
-        padding: "20px 0 16px",
-        flexShrink: 0,
-      }}
-    >
-      {/* 로고 */}
-      <div style={{ padding: "0 16px 24px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-          <div
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: 10,
+        display: "flex", flexDirection: "column",
+        padding: "20px 0 16px", flexShrink: 0,
+      }}>
+        {/* 로고 */}
+        <div style={{ padding: "0 16px 24px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+            <div style={{
+              width: 34, height: 34, borderRadius: 10,
               background: "linear-gradient(135deg, #2ea85a 0%, #3fca6b 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 18,
-              boxShadow: "0 2px 8px rgba(63,202,107,0.3)",
-              flexShrink: 0,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 18, boxShadow: "0 2px 8px rgba(63,202,107,0.3)", flexShrink: 0,
+            }}>📈</div>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: 14, color: "#1a2233" }}>예리</div>
+              <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 1 }}>AI 투자 어시스턴트</div>
+            </div>
+          </div>
+        </div>
+
+        <nav style={{ flex: 1, padding: "0 8px" }}>
+          {navItems.map(item => <NavItem key={item.href} item={item} />)}
+        </nav>
+        <div style={{ padding: "0 16px", fontSize: 10, color: "var(--text-muted)" }}>GPT-4.1 · o3 분석</div>
+
+        <style>{`
+          @keyframes alertPulse {
+            0%,100% { box-shadow:0 0 0 0 rgba(239,68,68,.5); }
+            50%      { box-shadow:0 0 0 5px rgba(239,68,68,0); }
+          }
+        `}</style>
+      </aside>
+    );
+  }
+
+  // ── 모바일: 드로어 ────────────────────────────────────────────────
+  const currentPage = navItems.find(n => pathname.startsWith(n.href));
+
+  return (
+    <>
+      {/* 모바일 상단 헤더 */}
+      <header style={{
+        position: "fixed", top: 0, left: 0, right: 0, zIndex: 200,
+        height: 52, background: "#fff",
+        borderBottom: "1px solid var(--border)",
+        display: "flex", alignItems: "center",
+        padding: "0 16px", gap: 12,
+        boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+      }}>
+        {/* 햄버거 버튼 */}
+        <button
+          onClick={() => setOpen(true)}
+          style={{
+            width: 40, height: 40, borderRadius: 10,
+            border: "none", background: "#f5f7fa",
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            gap: 5, cursor: "pointer", flexShrink: 0,
+            WebkitTapHighlightColor: "transparent",
+          }}
+          aria-label="메뉴 열기"
+        >
+          {[0,1,2].map(i => (
+            <span key={i} style={{
+              width: 18, height: 2, borderRadius: 2,
+              background: "var(--text-secondary)", display: "block",
+            }} />
+          ))}
+        </button>
+
+        {/* 로고 */}
+        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+          <span style={{ fontSize: 18 }}>📈</span>
+          <span style={{ fontWeight: 800, fontSize: 15, color: "#1a2233" }}>예리</span>
+        </div>
+
+        {/* 현재 페이지 이름 */}
+        {currentPage && (
+          <span style={{
+            marginLeft: "auto", fontSize: 12, fontWeight: 600,
+            color: "var(--nav-active-color)",
+            background: "var(--nav-active-bg)",
+            borderRadius: 8, padding: "3px 10px",
+          }}>
+            {currentPage.icon} {currentPage.label}
+          </span>
+        )}
+
+        {/* 알림 배지 (워치리스트 아닐 때도 상단에 표시) */}
+        {alertCount > 0 && !pathname.startsWith("/watchlist") && (
+          <div
+            onClick={() => router.push("/watchlist")}
+            style={{
+              width: 36, height: 36, borderRadius: 10,
+              border: "none", background: "#fff5f5",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", position: "relative", flexShrink: 0,
             }}
           >
-            📈
+            🔔
+            <span style={{
+              position: "absolute", top: 5, right: 5,
+              width: 8, height: 8, borderRadius: "50%",
+              background: "#ef4444",
+            }} />
           </div>
-          <div>
-            <div style={{ fontWeight: 800, fontSize: 14, color: "#1a2233", letterSpacing: "-0.02em" }}>예리</div>
-            <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 1 }}>AI 투자 비서</div>
+        )}
+      </header>
+
+      {/* 드로어 오버레이 */}
+      {open && (
+        <div
+          onClick={() => setOpen(false)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 300,
+            background: "rgba(0,0,0,0.45)",
+            animation: "fadeIn 0.2s ease",
+          }}
+        />
+      )}
+
+      {/* 드로어 패널 */}
+      <div style={{
+        position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 400,
+        width: 240, background: "#fff",
+        boxShadow: "4px 0 20px rgba(0,0,0,0.15)",
+        transform: open ? "translateX(0)" : "translateX(-100%)",
+        transition: "transform 0.25s cubic-bezier(0.4,0,0.2,1)",
+        display: "flex", flexDirection: "column",
+        padding: "20px 0",
+        overflowY: "auto",
+      }}>
+        {/* 드로어 헤더 */}
+        <div style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "0 16px 20px",
+          borderBottom: "1px solid var(--border)", marginBottom: 12,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+            <div style={{
+              width: 34, height: 34, borderRadius: 10,
+              background: "linear-gradient(135deg, #2ea85a 0%, #3fca6b 100%)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 18, boxShadow: "0 2px 8px rgba(63,202,107,0.3)",
+            }}>📈</div>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: 14, color: "#1a2233" }}>예리</div>
+              <div style={{ fontSize: 10, color: "var(--text-muted)" }}>AI 투자 어시스턴트</div>
+            </div>
           </div>
+          {/* 닫기 버튼 */}
+          <button
+            onClick={() => setOpen(false)}
+            style={{
+              width: 32, height: 32, borderRadius: 8, border: "none",
+              background: "#f5f7fa", fontSize: 16, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}
+          >✕</button>
+        </div>
+
+        {/* 네비 */}
+        <nav style={{ flex: 1, padding: "0 12px" }}>
+          {navItems.map(item => <NavItem key={item.href} item={item} />)}
+        </nav>
+
+        <div style={{ padding: "16px", fontSize: 10, color: "var(--text-muted)", borderTop: "1px solid var(--border)", marginTop: 12 }}>
+          GPT-4.1 · o3 분석
         </div>
       </div>
 
-      {/* 네비 */}
-      <nav style={{ flex: 1, padding: "0 8px" }}>
-        {navItems.map((item) => {
-          const active = pathname.startsWith(item.href);
-          return (
-            <Link key={item.href} href={item.href}>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 9,
-                  padding: "9px 10px",
-                  borderRadius: 10,
-                  marginBottom: 2,
-                  background: active ? "var(--nav-active-bg)" : "transparent",
-                  color: active ? "var(--nav-active-color)" : "var(--text-secondary)",
-                  fontWeight: active ? 700 : 400,
-                  fontSize: 13,
-                  cursor: "pointer",
-                  transition: "background 0.15s, color 0.15s",
-                }}
-              >
-                <span style={{ fontSize: 16 }}>{item.icon}</span>
-                {item.label}
-              </div>
-            </Link>
-          );
-        })}
-      </nav>
+      {/* 모바일 본문 상단 여백 (헤더 height만큼) */}
+      <div style={{ height: 52, flexShrink: 0 }} />
 
-      {/* 푸터 */}
-      <div style={{ padding: "0 16px", fontSize: 10, color: "var(--text-muted)", lineHeight: 1.6 }}>
-        GPT-4.1 · o3 분석
-      </div>
-    </aside>
+      <style>{`
+        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+        @keyframes alertPulse {
+          0%,100% { box-shadow:0 0 0 0 rgba(239,68,68,.5); }
+          50%      { box-shadow:0 0 0 5px rgba(239,68,68,0); }
+        }
+        /* 터치 기기에서 active 상태 피드백 */
+        [role=button]:active { opacity: 0.75; }
+      `}</style>
+    </>
   );
 }

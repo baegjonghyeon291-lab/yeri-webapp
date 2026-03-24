@@ -139,6 +139,7 @@ export default function ChatLayout({
         value={input}
         onChange={onInputChange}
         onSend={() => onSend()}
+        onSendText={(text) => onSend(text)}
         loading={loading}
         quickButtons={quickButtons}
         onQuick={(q) => onSend(q)}
