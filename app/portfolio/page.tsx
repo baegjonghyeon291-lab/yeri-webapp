@@ -44,7 +44,6 @@ export default function PortfolioPage() {
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const resultRef = useRef<HTMLDivElement>(null);
-  const [devModalOpen, setDevModalOpen] = useState(false);
 
   // ── 티커 자동완성 ──────────────────────────────────
   const [suggestions, setSuggestions] = useState<Record<number, Suggestion[]>>({});
@@ -461,110 +460,6 @@ export default function PortfolioPage() {
           <button onClick={resetPortfolio} style={{ width: "100%", padding: "12px", marginTop: 16, borderRadius: 12, border: "1px solid #fca5a5", background: "#fff8f8", color: "#d64060", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>🗑️ 포트폴리오 초기화</button>
         </>
       ) : <ResultDashboard />}
-
-      {/* 개발자의 한마디 버튼 */}
-      <div style={{ textAlign: "center", marginTop: 40, paddingBottom: 20 }}>
-        <button
-          onClick={() => setDevModalOpen(true)}
-          style={{
-            padding: "12px 28px", borderRadius: 24,
-            border: "1.5px solid #f0d4e8",
-            background: "linear-gradient(135deg, #fff0f9 0%, #fce7f3 100%)",
-            color: "#be185d", fontSize: 13, fontWeight: 700,
-            cursor: "pointer", transition: "all 0.2s",
-            boxShadow: "0 2px 10px rgba(190,24,93,0.08)",
-          }}
-          onMouseOver={e => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(190,24,93,0.15)"; }}
-          onMouseOut={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 2px 10px rgba(190,24,93,0.08)"; }}
-        >
-          👉 개발자의 한마디 💌
-        </button>
-      </div>
-
-      {/* 개발자의 한마디 모달 */}
-      {devModalOpen && (
-        <>
-          {/* 배경 dim */}
-          <div
-            onClick={() => setDevModalOpen(false)}
-            style={{
-              position: "fixed", inset: 0, zIndex: 9998,
-              background: "rgba(0,0,0,0.45)",
-              animation: "devFadeIn 0.25s ease",
-            }}
-          />
-          {/* 모달 카드 */}
-          <div style={{
-            position: "fixed", zIndex: 9999,
-            top: "50%", left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: "min(380px, 90vw)",
-            maxHeight: "80vh", overflowY: "auto",
-            background: "linear-gradient(170deg, #fff5f9 0%, #ffffff 40%, #fdf2f8 100%)",
-            borderRadius: 24,
-            padding: "28px 24px 24px",
-            boxShadow: "0 20px 60px rgba(190,24,93,0.18), 0 0 0 1px rgba(244,114,182,0.2)",
-            animation: "devPopIn 0.3s cubic-bezier(0.34,1.56,0.64,1)",
-          }}>
-            {/* 닫기 버튼 */}
-            <button
-              onClick={() => setDevModalOpen(false)}
-              style={{
-                position: "absolute", top: 14, right: 14,
-                width: 32, height: 32, borderRadius: "50%",
-                border: "none", background: "#fce7f3",
-                color: "#be185d", fontSize: 16, fontWeight: 700,
-                cursor: "pointer", display: "flex",
-                alignItems: "center", justifyContent: "center",
-                transition: "background 0.15s",
-              }}
-              onMouseOver={e => { e.currentTarget.style.background = "#fbcfe8"; }}
-              onMouseOut={e => { e.currentTarget.style.background = "#fce7f3"; }}
-            >✕</button>
-
-            {/* 헤더 */}
-            <div style={{ textAlign: "center", marginBottom: 20 }}>
-              <div style={{ fontSize: 36, marginBottom: 8 }}>💌</div>
-              <div style={{ fontSize: 17, fontWeight: 800, color: "#831843" }}>개발자의 한마디</div>
-              <div style={{ fontSize: 11, color: "#9d174d", marginTop: 4 }}>from. 예리남편 ♥</div>
-            </div>
-
-            {/* 본문 */}
-            <div style={{
-              background: "rgba(255,255,255,0.7)",
-              borderRadius: 16, padding: "20px 18px",
-              border: "1px solid #fce7f3",
-              fontSize: 13, lineHeight: 2,
-              color: "#1a2233",
-            }}>
-              <p>이 앱은 오로지 한명 귀염둥이 예리만을 위한 앱이며,<br />수정사항은 밑에 고객센터로 문의 주시기 바랍니다.</p>
-              <div style={{ height: 12 }} />
-              <p>하루 이용료는 <b style={{ color: "#be185d" }}>94973억원</b>이며<br />한달 이용료는 <b style={{ color: "#be185d" }}>79494343663억원</b>입니다.</p>
-              <div style={{ height: 12 }} />
-              <p style={{ background: "#fdf2f8", borderRadius: 10, padding: "10px 12px", border: "1px solid #fce7f3" }}>
-                📌 <b>937702-00-770267</b> (국민)<br />
-                이 계좌로 입금 바랍니다.
-              </p>
-              <div style={{ height: 12 }} />
-              <p style={{ background: "#fdf2f8", borderRadius: 10, padding: "10px 12px", border: "1px solid #fce7f3" }}>
-                📞 고객센터: <b>010-6617-4707</b> (예리남편)<br />
-                <span style={{ fontSize: 11, color: "var(--text-secondary)" }}>고객센터 직원이 1명이라 문의 고객이 많을 시 대기 시간이 발생할 수 있습니다 ㅎ</span>
-              </p>
-            </div>
-
-            {/* 하단 하트 */}
-            <div style={{ textAlign: "center", marginTop: 16, fontSize: 22, letterSpacing: 6 }}>♥ ♥ ♥</div>
-          </div>
-
-          <style>{`
-            @keyframes devFadeIn { from { opacity: 0; } to { opacity: 1; } }
-            @keyframes devPopIn {
-              from { opacity: 0; transform: translate(-50%, -50%) scale(0.85); }
-              to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-            }
-          `}</style>
-        </>
-      )}
     </div>
   );
 }

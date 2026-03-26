@@ -19,6 +19,7 @@ export default function Sidebar() {
   const [open, setOpen]         = useState(false);
   const [alertCount, setAlertCount] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  const [devModalOpen, setDevModalOpen] = useState(false);
 
   // 모바일 감지
   useEffect(() => {
@@ -146,6 +147,25 @@ export default function Sidebar() {
 
         <nav style={{ flex: 1, padding: "0 8px" }}>
           {navItems.map(item => <NavItem key={item.href} item={item} />)}
+          {/* 개발자의 한마디 */}
+          <div
+            role="button" tabIndex={0}
+            onClick={() => setDevModalOpen(true)}
+            style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "12px 16px", borderRadius: 12, marginBottom: 4,
+              background: "transparent", color: "var(--text-secondary)",
+              fontWeight: 400, fontSize: 14, cursor: "pointer",
+              userSelect: "none", WebkitTapHighlightColor: "transparent",
+              transition: "background 0.15s, color 0.15s",
+              minHeight: 48, borderLeft: "3px solid transparent", paddingLeft: 16,
+            }}
+            onMouseOver={e => { e.currentTarget.style.background = "#fff0f9"; e.currentTarget.style.color = "#be185d"; }}
+            onMouseOut={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+          >
+            <span style={{ fontSize: 20, lineHeight: 1, flexShrink: 0 }}>💌</span>
+            <span style={{ flex: 1 }}>개발자의 한마디</span>
+          </div>
         </nav>
         <div style={{ padding: "0 16px", fontSize: 10, color: "var(--text-muted)" }}>GPT-4.1 · o3 분석</div>
 
@@ -304,6 +324,23 @@ export default function Sidebar() {
         {/* 네비 */}
         <nav style={{ flex: 1, padding: "0 12px" }}>
           {navItems.map(item => <NavItem key={item.href} item={item} />)}
+          {/* 개발자의 한마디 (모바일 드로어) */}
+          <div
+            role="button" tabIndex={0}
+            onClick={() => { setOpen(false); setDevModalOpen(true); }}
+            style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "12px 16px", borderRadius: 12, marginBottom: 4,
+              background: "transparent", color: "var(--text-secondary)",
+              fontWeight: 400, fontSize: 14, cursor: "pointer",
+              userSelect: "none", WebkitTapHighlightColor: "transparent",
+              transition: "background 0.15s, color 0.15s",
+              minHeight: 48, borderLeft: "3px solid transparent", paddingLeft: 16,
+            }}
+          >
+            <span style={{ fontSize: 20, lineHeight: 1, flexShrink: 0 }}>💌</span>
+            <span style={{ flex: 1 }}>개발자의 한마디</span>
+          </div>
         </nav>
 
         <div style={{ padding: "16px", fontSize: 10, color: "var(--text-muted)", borderTop: "1px solid var(--border)", marginTop: 12 }}>
@@ -320,9 +357,87 @@ export default function Sidebar() {
           0%,100% { box-shadow:0 0 0 0 rgba(239,68,68,.5); }
           50%      { box-shadow:0 0 0 5px rgba(239,68,68,0); }
         }
-        /* 터치 기기에서 active 상태 피드백 */
         [role=button]:active { opacity: 0.75; }
       `}</style>
+
+      {/* ── 개발자의 한마디 모달 (전역) ── */}
+      {devModalOpen && (
+        <>
+          <div
+            onClick={() => setDevModalOpen(false)}
+            style={{
+              position: "fixed", inset: 0, zIndex: 9998,
+              background: "rgba(0,0,0,0.45)",
+              animation: "devFadeIn 0.25s ease",
+            }}
+          />
+          <div style={{
+            position: "fixed", zIndex: 9999,
+            top: "50%", left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "min(420px, 92vw)",
+            maxHeight: "85vh", overflowY: "auto",
+            background: "linear-gradient(170deg, #fff5f9 0%, #ffffff 40%, #fdf2f8 100%)",
+            borderRadius: 28,
+            padding: "32px 28px 28px",
+            boxShadow: "0 20px 60px rgba(190,24,93,0.18), 0 0 0 1px rgba(244,114,182,0.2)",
+            animation: "devPopIn 0.3s cubic-bezier(0.34,1.56,0.64,1)",
+          }}>
+            <button
+              onClick={() => setDevModalOpen(false)}
+              style={{
+                position: "absolute", top: 16, right: 16,
+                width: 36, height: 36, borderRadius: "50%",
+                border: "none", background: "#fce7f3",
+                color: "#be185d", fontSize: 18, fontWeight: 700,
+                cursor: "pointer", display: "flex",
+                alignItems: "center", justifyContent: "center",
+                transition: "background 0.15s",
+              }}
+              onMouseOver={e => { e.currentTarget.style.background = "#fbcfe8"; }}
+              onMouseOut={e => { e.currentTarget.style.background = "#fce7f3"; }}
+            >✕</button>
+
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
+              <div style={{ fontSize: 42, marginBottom: 10 }}>💌</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: "#831843" }}>개발자의 한마디</div>
+              <div style={{ fontSize: 12, color: "#9d174d", marginTop: 5 }}>from. 예리남편 ♥</div>
+            </div>
+
+            <div style={{
+              background: "rgba(255,255,255,0.7)",
+              borderRadius: 18, padding: "24px 22px",
+              border: "1px solid #fce7f3",
+              fontSize: 14, lineHeight: 2.1,
+              color: "#1a2233",
+            }}>
+              <p>이 앱은 오로지 한명 귀염둥이 예리만을 위한 앱이며,<br />수정사항은 밑에 고객센터로 문의 주시기 바랍니다.</p>
+              <div style={{ height: 14 }} />
+              <p>하루 이용료는 <b style={{ color: "#be185d" }}>94973억원</b>이며<br />한달 이용료는 <b style={{ color: "#be185d" }}>79494343663억원</b>입니다.</p>
+              <div style={{ height: 14 }} />
+              <p style={{ background: "#fdf2f8", borderRadius: 12, padding: "12px 14px", border: "1px solid #fce7f3" }}>
+                📌 <b>937702-00-770267</b> (국민)<br />
+                이 계좌로 입금 바랍니다.
+              </p>
+              <div style={{ height: 14 }} />
+              <p style={{ background: "#fdf2f8", borderRadius: 12, padding: "12px 14px", border: "1px solid #fce7f3" }}>
+                📞 고객센터: <b>010-6617-4707</b> (예리남편)<br />
+                <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>고객센터 직원이 1명이라 문의 고객이 많을 시 대기 시간이 발생할 수 있습니다 ㅎ</span>
+              </p>
+            </div>
+
+            <div style={{ textAlign: "center", marginTop: 20, fontSize: 26, letterSpacing: 8 }}>♥ ♥ ♥</div>
+          </div>
+
+          <style>{`
+            @keyframes devFadeIn { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes devPopIn {
+              from { opacity: 0; transform: translate(-50%, -50%) scale(0.85); }
+              to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            }
+          `}</style>
+        </>
+      )}
     </>
   );
 }
