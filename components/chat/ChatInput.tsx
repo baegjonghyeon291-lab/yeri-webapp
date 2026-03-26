@@ -150,7 +150,7 @@ export default function ChatInput({ value, onChange, onSend, onSendText, loading
       )}
 
       {/* 입력 + 전송 */}
-      <div style={{ display: "flex", gap: 8, padding: "10px 14px 14px", alignItems: "flex-end" }}>
+      <div style={{ display: "flex", gap: 8, padding: "10px 14px calc(14px + env(safe-area-inset-bottom, 0px))", alignItems: "flex-end" }}>
         <textarea
           ref={textareaRef}
           value={value}

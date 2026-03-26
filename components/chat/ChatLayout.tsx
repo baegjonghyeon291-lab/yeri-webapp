@@ -30,7 +30,7 @@ export default function ChatLayout({
   }, [messages, loading]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg-chat)" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "var(--bg-chat)" }}>
 
       {/* ── 헤더 ── */}
       <div style={{

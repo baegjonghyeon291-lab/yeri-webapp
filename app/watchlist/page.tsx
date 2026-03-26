@@ -108,7 +108,7 @@ export default function WatchlistPage() {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg-app)" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "var(--bg-app)" }}>
 
       <div style={{
         padding: "14px 24px",

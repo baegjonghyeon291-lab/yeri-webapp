@@ -359,7 +359,7 @@ export default function PortfolioPage() {
   };
 
   return (
-    <div style={{ height: "100vh", overflowY: "auto", padding: "20px 24px 100px", background: "var(--bg-app)" }}>
+    <div style={{ height: "100%", overflowY: "auto", padding: "20px 24px 120px", background: "var(--bg-app)" }}>
       {loading && <LoadingOverlay step={loadingStep} />}
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>

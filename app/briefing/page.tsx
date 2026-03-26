@@ -198,7 +198,7 @@ export default function BriefingPage() {
   const onFetch = tab === "market" ? fetchMarket : fetchWatchlist;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", background: "var(--bg-app)" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "var(--bg-app)" }}>
       {loading && <LoadingOverlay step={loadingStep} />}
       <div style={{ padding: "14px 24px", background: "#fff", borderBottom: "1px solid var(--border)", flexShrink: 0, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
         <div style={{ fontWeight: 800, fontSize: 16, color: "var(--text-primary)" }}>📊 브리핑</div>

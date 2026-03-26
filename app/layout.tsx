@@ -52,7 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         background: 'var(--bg-primary)',
       }}>
         <Sidebar />
-        <main className="flex-1 overflow-hidden" style={{ minWidth: 0 }}>
+        <main className="flex-1 overflow-hidden" style={{ minWidth: 0, display: 'flex', flexDirection: 'column', height: '100%' }}>
           {children}
         </main>
         <InstallPrompt />

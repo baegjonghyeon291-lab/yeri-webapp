@@ -230,6 +230,12 @@ a { text-decoration: none; color: inherit; }
 @media (display-mode: standalone) {
   /* standalone에서 safe-area 재확인 */
   body {
+    padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
+  }
+  /* 모바일 헤더가 safe-area 위로 올라가도록 */
+  main {
+    flex: 1;
+    min-height: 0;
   }
 }
