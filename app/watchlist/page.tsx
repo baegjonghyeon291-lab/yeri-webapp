@@ -156,26 +156,21 @@ export default function WatchlistPage() {
             {alerts.map((a, i) => {
               if (dismissed.has(i)) return null;
 
-              // ── 레벨별 색상 ──────────────────────────────
-              const isHigh = a.level === "HIGH";
-              const isMed  = a.level === "MEDIUM";
-              const borderColor = isHigh ? "#ef4444" : isMed ? "#f59e0b" : "#6b7280";
-              const bgColor     = isHigh ? "#fff5f5" : isMed ? "#fffbf0" : "#f9fafb";
-              const tagBg       = isHigh ? "#fee2e2" : isMed ? "#fef3c7" : "#f3f4f6";
-              const tagColor    = isHigh ? "#dc2626" : isMed ? "#d97706" : "#374151";
+              // ── 레벨별 클래스 ──────────────────────────────
+              const statusClass = a.level === "HIGH" ? "status-high" : a.level === "MEDIUM" ? "status-medium" : "status-info";
+              const borderColor = a.level === "HIGH" ? "var(--status-high-text)" : a.level === "MEDIUM" ? "var(--status-medium-text)" : "var(--status-info-text)";
 
               return (
-                <div key={i} style={{
-                  background: bgColor,
+                <div key={i} className={statusClass} style={{
                   borderRadius: 12,
                   border: `1px solid ${borderColor}30`,
                   borderLeft: `4px solid ${borderColor}`,
                   padding: "10px 12px",
-                  boxShadow: isHigh ? `0 2px 8px ${borderColor}20` : "none",
+                  boxShadow: a.level === "HIGH" ? `0 2px 8px ${borderColor}20` : "none",
                 }}>
                   {/* 상단: 이모지 + 제목 + 레벨 태그 */}
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                    <span style={{ fontSize: isHigh ? 18 : 15 }}>{a.emoji}</span>
+                    <span style={{ fontSize: a.level === "HIGH" ? 18 : 15 }}>{a.emoji}</span>
                     <span style={{ fontSize: 12, fontWeight: 700, color: "var(--text-primary)", flex: 1 }}>
                       <span style={{
                         display: "inline-block", background: "#ecfdf5", color: "#059669",
@@ -183,11 +178,7 @@ export default function WatchlistPage() {
                       }}>{a.ticker}</span>
                       {a.title.replace(a.ticker, "").trim()}
                     </span>
-                    <span style={{
-                      background: tagBg, color: tagColor,
-                      borderRadius: 4, fontSize: 9, fontWeight: 700,
-                      padding: "1px 6px", flexShrink: 0,
-                    }}>{a.level}</span>
+                    <span className={`status-badge ${statusClass}`} style={{ flexShrink: 0 }}>{a.level}</span>
                   </div>
 
                   {/* 설명 */}
@@ -202,7 +193,7 @@ export default function WatchlistPage() {
                       onClick={() => router.push(`/chat?analyze=${a.ticker}`)}
                       style={{
                         padding: "4px 10px", borderRadius: 20, border: "none",
-                        background: isHigh ? "#ef4444" : "var(--accent)",
+                        background: a.level === "HIGH" ? "#ef4444" : "var(--accent)",
                         color: "#fff", fontSize: 11, fontWeight: 700,
                         cursor: "pointer", transition: "opacity .15s",
                       }}

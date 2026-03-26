@@ -38,7 +38,35 @@
   /* ── 태그/뱃지 ── */
   --badge-bg: #e8f9ef;
   --badge-color: #2ea85a;
+
+  /* ── 통합 리스크 시스템 ── */
+  --status-high-bg: #fff1f2;
+  --status-high-text: #e11d48;
+  --status-high-border: #fecdd3;
+  
+  --status-medium-bg: #fffbeb;
+  --status-medium-text: #d97706;
+  --status-medium-border: #fef3c7;
+  
+  --status-info-bg: #f0f9ff;
+  --status-info-text: #0284c7;
+  --status-info-border: #e0f2fe;
 }
+
+/* ── 유틸리티 클래스 ── */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  border-width: 1px;
+  border-style: solid;
+}
+.status-high { background: var(--status-high-bg); color: var(--status-high-text); border-color: var(--status-high-border); }
+.status-medium { background: var(--status-medium-bg); color: var(--status-medium-text); border-color: var(--status-medium-border); }
+.status-info { background: var(--status-info-bg); color: var(--status-info-text); border-color: var(--status-info-border); }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -144,7 +172,7 @@ a { text-decoration: none; color: inherit; }
   /* ── safe-area 하단 보정 ── */
   /* PWA standalone + 노치 기기 홈인디케이터 잘림 방지 */
   main {
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: calc(env(safe-area-inset-bottom) + 80px); /* 탭바 높이 고려 */
   }
 
   /* 헤더 바로 아래 첫 번째 자식에 상단 여백 확보 */
@@ -154,13 +182,48 @@ a { text-decoration: none; color: inherit; }
 
   /* 퀵버튼 터치 영역 확장 */
   .quick-scroll button {
-    padding: 8px 16px !important;
-    font-size: 13px !important;
-    min-height: 36px;
+    padding: 10px 18px !important;
+    font-size: 14px !important;
+    min-height: 44px;
   }
 
   /* 텍스트 영역 — iOS 자동 줌 방지 */
   textarea, input { font-size: 16px !important; }
+
+  /* 모바일 스택 */
+  .mobile-stack {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+  
+  .mobile-hide { display: none !important; }
+  
+  /* 큰 버튼 터치 타겟 보정 */
+  button {
+    min-height: 48px;
+  }
+  
+  /* 카드 패딩 압축 */
+  .card {
+    padding: 16px !important;
+  }
+
+  /* 하단 입력 패널(채팅/관심종목) safe-area 보정 */
+  [style*="borderTop"][style*="flexShrink: 0"] {
+    padding-bottom: calc(14px + env(safe-area-inset-bottom)) !important;
+  }
+
+  /* number 입력 스피너 숨김 */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
 }
 
 /* ── PWA standalone 모드 추가 보정 ── */

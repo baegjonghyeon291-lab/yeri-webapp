@@ -20,13 +20,6 @@ function loadRecent(): string[] {
   try { return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); } catch { return []; }
 }
 
-const DEFAULT_QUICK = [
-  "삼성전자 어때?",
-  "TSLA 언제 사?",
-  "오늘 브리핑",
-  "요즘 뭐 살까?",
-];
-
 function now() {
   return new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
 }
@@ -36,6 +29,7 @@ export default function ChatClient() {
   const router = useRouter();
   const [sessionId, setSessionId] = useState("");
   const [recentTickers, setRecentTickers] = useState<string[]>([]);
+  const [portfolioTickers, setPortfolioTickers] = useState<string[]>([]);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "bot",
@@ -53,6 +47,13 @@ export default function ChatClient() {
   useEffect(() => {
     setSessionId(getSessionId());
     setRecentTickers(loadRecent());
+    const saved = localStorage.getItem("yeri_portfolio_items");
+    if (saved) {
+      try {
+        const items = JSON.parse(saved);
+        setPortfolioTickers(items.map((i: any) => i.ticker).filter(Boolean));
+      } catch (e) {}
+    }
   }, []);
 
   // URL ?analyze=TICKER 파라미터 감지 → 자동 분석 실행
@@ -102,12 +103,16 @@ export default function ChatClient() {
     }
   }
 
-  const quickButtons = recentTickers.length > 0
-    ? [
-        ...recentTickers.slice(0, 4).map(t => `${t} 분석해줘`),
-        ...DEFAULT_QUICK.slice(0, 4 - Math.min(recentTickers.length, 4)),
-      ]
-    : DEFAULT_QUICK;
+  const quickButtons = [
+    ...(portfolioTickers.length > 0 ? ["내 포트폴리오 분석"] : []),
+    "오늘 시장 브리핑",
+    "내 관심종목 분석",
+    ...(recentTickers.length >= 2 ? [`${recentTickers[0]} vs ${recentTickers[1]} 비교`] : []),
+    ...(recentTickers.length > 0 ? [recentTickers[0] + " 더 자세히"] : []),
+    "요즘 핫한 종목은?",
+    "배당주 추천해줘",
+    "삼성전자 어때?",
+  ];
 
   return (
     <>
