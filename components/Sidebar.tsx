@@ -148,8 +148,7 @@ export default function Sidebar() {
         <nav style={{ flex: 1, padding: "0 8px" }}>
           {navItems.map(item => <NavItem key={item.href} item={item} />)}
           {/* 개발자의 한마디 */}
-          <div
-            role="button" tabIndex={0}
+          <button
             onClick={() => setDevModalOpen(true)}
             style={{
               display: "flex", alignItems: "center", gap: 10,
@@ -159,13 +158,14 @@ export default function Sidebar() {
               userSelect: "none", WebkitTapHighlightColor: "transparent",
               transition: "background 0.15s, color 0.15s",
               minHeight: 48, borderLeft: "3px solid transparent", paddingLeft: 16,
+              border: "none", width: "100%", textAlign: "left",
             }}
             onMouseOver={e => { e.currentTarget.style.background = "#fff0f9"; e.currentTarget.style.color = "#be185d"; }}
             onMouseOut={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-secondary)"; }}
           >
             <span style={{ fontSize: 20, lineHeight: 1, flexShrink: 0 }}>💌</span>
             <span style={{ flex: 1 }}>개발자의 한마디</span>
-          </div>
+          </button>
         </nav>
         <div style={{ padding: "0 16px", fontSize: 10, color: "var(--text-muted)" }}>GPT-4.1 · o3 분석</div>
 
@@ -325,9 +325,8 @@ export default function Sidebar() {
         <nav style={{ flex: 1, padding: "0 12px" }}>
           {navItems.map(item => <NavItem key={item.href} item={item} />)}
           {/* 개발자의 한마디 (모바일 드로어) */}
-          <div
-            role="button" tabIndex={0}
-            onClick={() => { setOpen(false); setDevModalOpen(true); }}
+          <button
+            onClick={() => { setOpen(false); setTimeout(() => setDevModalOpen(true), 300); }}
             style={{
               display: "flex", alignItems: "center", gap: 10,
               padding: "12px 16px", borderRadius: 12, marginBottom: 4,
@@ -336,11 +335,12 @@ export default function Sidebar() {
               userSelect: "none", WebkitTapHighlightColor: "transparent",
               transition: "background 0.15s, color 0.15s",
               minHeight: 48, borderLeft: "3px solid transparent", paddingLeft: 16,
+              border: "none", width: "100%", textAlign: "left",
             }}
           >
             <span style={{ fontSize: 20, lineHeight: 1, flexShrink: 0 }}>💌</span>
             <span style={{ flex: 1 }}>개발자의 한마디</span>
-          </div>
+          </button>
         </nav>
 
         <div style={{ padding: "16px", fontSize: 10, color: "var(--text-muted)", borderTop: "1px solid var(--border)", marginTop: 12 }}>
