@@ -88,8 +88,10 @@ export default function ChatLayout({
       {/* ── 메시지 목록 ── */}
       <div style={{
         flex: 1, overflowY: "auto",
-        padding: "20px 24px",
+        padding: "20px 16px",
         display: "flex", flexDirection: "column", gap: 6,
+        WebkitOverflowScrolling: "touch",
+        overscrollBehavior: "contain",
       }}>
         {messages.map((m, i) => {
           const prevM = messages[i - 1];

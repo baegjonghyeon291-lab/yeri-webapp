@@ -70,12 +70,18 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+html, body {
+  height: 100%;
+  height: 100dvh;
+}
+
 body {
   background: var(--bg-app);
   color: var(--text-primary);
   font-family: 'Pretendard', -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
   -webkit-font-smoothing: antialiased;
-  min-height: 100vh;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 /* ── 스크롤바 ── */
@@ -170,9 +176,9 @@ a { text-decoration: none; color: inherit; }
   main > * { touch-action: pan-y; }
 
   /* ── safe-area 하단 보정 ── */
-  /* PWA standalone + 노치 기기 홈인디케이터 잘림 방지 */
+  /* 채팅 입력창이 자체적으로 safe-area 처리함 → main에서는 제거 */
   main {
-    padding-bottom: calc(env(safe-area-inset-bottom) + 80px); /* 탭바 높이 고려 */
+    padding-bottom: 0 !important;
   }
 
   /* 헤더 바로 아래 첫 번째 자식에 상단 여백 확보 */
