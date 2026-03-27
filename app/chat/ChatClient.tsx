@@ -82,19 +82,25 @@ export default function ChatClient() {
       const res = await fetch(`${API}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: msg, sessionId }),
+        body: JSON.stringify({ text: msg, chatId: sessionId }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      const firstMsg = data.messages?.[0];
-      const reply = firstMsg?.content ?? "응답을 받지 못했어요.";
-      setMessages((prev) => [...prev, { 
-        role: "bot", 
-        content: reply, 
+
+      // 모든 메시지를 순회하며 타입별로 변환
+      const apiMsgs = data.messages || [];
+      if (apiMsgs.length === 0) throw new Error("응답을 받지 못했어요.");
+
+      const newMsgs: Message[] = apiMsgs.map((m: any) => ({
+        role: "bot" as const,
+        content: m.content || "",
         time: now(),
-        type: firstMsg?.type,
-        candidates: firstMsg?.candidates
-      }]);
+        type: m.type,
+        candidates: m.candidates,
+        expectedQuestions: m.expectedQuestions,
+        recData: m.data,
+      }));
+      setMessages((prev) => [...prev, ...newMsgs]);
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : "알 수 없는 오류";
       setMessages((prev) => [
