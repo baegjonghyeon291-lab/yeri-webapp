@@ -63,6 +63,9 @@ export default function ChatLayout({
                 boxShadow: "0 0 5px rgba(63,202,107,0.7)",
               }} />
               <span style={{ fontSize: 11, color: "#3fca6b", fontWeight: 500 }}>분석 가능</span>
+              <span style={{ fontSize: 9, color: "var(--text-muted)", marginLeft: 4, fontWeight: 500 }}>
+                v:{process.env.NEXT_PUBLIC_BUILD_HASH || "dev"}
+              </span>
             </div>
           </div>
         </div>
