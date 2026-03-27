@@ -167,7 +167,7 @@ export default function Sidebar() {
             <span style={{ flex: 1 }}>개발자의 한마디</span>
           </button>
         </nav>
-        <div style={{ padding: "0 16px", fontSize: 10, color: "var(--text-muted)" }}>GPT-4.1 · o3 분석</div>
+        <div style={{ padding: "0 16px", fontSize: 10, color: "var(--text-muted)" }}>GPT-4.1 · o3 분석 · build:{process.env.NEXT_PUBLIC_BUILD_HASH || "dev"}</div>
 
         <style>{`
           @keyframes alertPulse {
@@ -344,7 +344,7 @@ export default function Sidebar() {
         </nav>
 
         <div style={{ padding: "16px", fontSize: 10, color: "var(--text-muted)", borderTop: "1px solid var(--border)", marginTop: 12 }}>
-          GPT-4.1 · o3 분석
+          GPT-4.1 · o3 분석 · build:{process.env.NEXT_PUBLIC_BUILD_HASH || "dev"}
         </div>
       </div>
 

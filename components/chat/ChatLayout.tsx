@@ -97,7 +97,7 @@ export default function ChatLayout({
           return (
             <div key={i}>
               {showDateDivider && m.date && <DateDivider label={formatDateLabel(m.date)} />}
-              <MessageBubble message={m} showAvatar={showAvatar} />
+              <MessageBubble message={m} showAvatar={showAvatar} onSend={onSend} />
             </div>
           );
         })}

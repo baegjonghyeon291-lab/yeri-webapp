@@ -4,11 +4,14 @@ export interface Message {
   content: string;
   time: string;
   date?: string;
+  type?: string;
+  candidates?: Array<{ ticker: string; name: string; similarity?: number; desc?: string; tier?: string }>;
 }
 
 interface Props {
   message: Message;
   showAvatar?: boolean;
+  onSend?: (text: string) => void;
 }
 
 // 날짜 구분선
@@ -20,7 +23,7 @@ export function DateDivider({ label }: { label: string }) {
   );
 }
 
-export default function MessageBubble({ message, showAvatar = true }: Props) {
+export default function MessageBubble({ message, showAvatar = true, onSend }: Props) {
   const isUser = message.role === "user";
 
   /* ── 유저 말풍선 (우측, 그린) ── */
@@ -100,6 +103,52 @@ export default function MessageBubble({ message, showAvatar = true }: Props) {
         <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 4, paddingLeft: 1 }}>
           {message.time}
         </div>
+
+        {/* ── 후보 종목 버튼 목록 ── */}
+        {message.type === "candidates" && message.candidates && message.candidates.length > 0 && (
+          <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+            {message.candidates.map((c, idx) => (
+              <button
+                key={idx}
+                onClick={() => onSend?.(`${c.ticker} 분석해줘`)}
+                style={{
+                  padding: "10px 14px",
+                  borderRadius: 14,
+                  background: "#fff",
+                  border: "1px solid #dae1e7",
+                  color: "#2c3e50",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  textAlign: "left",
+                  cursor: "pointer",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 3,
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.03)",
+                  transition: "all 0.2s",
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.borderColor = "#3fca6b";
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                  e.currentTarget.style.boxShadow = "0 3px 6px rgba(63,202,107,0.15)";
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.borderColor = "#dae1e7";
+                  e.currentTarget.style.transform = "none";
+                  e.currentTarget.style.boxShadow = "0 2px 4px rgba(0,0,0,0.03)";
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span>
+                    {c.name} <span style={{ color: "var(--text-muted)", fontSize: 12, fontWeight: 500 }}>({c.ticker})</span>
+                  </span>
+                  <span style={{ fontSize: 12, color: "var(--primary)", fontWeight: 700 }}>🔍 분석</span>
+                </div>
+                {c.desc && <div style={{ fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>{c.desc}</div>}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -86,8 +86,15 @@ export default function ChatClient() {
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      const reply = data.messages?.[0]?.content ?? "응답을 받지 못했어요.";
-      setMessages((prev) => [...prev, { role: "bot", content: reply, time: now() }]);
+      const firstMsg = data.messages?.[0];
+      const reply = firstMsg?.content ?? "응답을 받지 못했어요.";
+      setMessages((prev) => [...prev, { 
+        role: "bot", 
+        content: reply, 
+        time: now(),
+        type: firstMsg?.type,
+        candidates: firstMsg?.candidates
+      }]);
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : "알 수 없는 오류";
       setMessages((prev) => [
