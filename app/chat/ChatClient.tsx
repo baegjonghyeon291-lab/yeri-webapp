@@ -128,45 +128,14 @@ export default function ChatClient() {
   ];
 
   return (
-    <>
-      {recentTickers.length > 0 && (
-        <div style={{
-          padding: "8px 16px",
-          background: "#fff",
-          borderBottom: "1px solid var(--border)",
-          display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap",
-          flexShrink: 0,
-        }}>
-          <span style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 600, flexShrink: 0 }}>
-            최근 분석:
-          </span>
-          {recentTickers.map(t => (
-            <button
-              key={t}
-              onClick={() => send(`${t} 분석해줘`)}
-              disabled={loading}
-              style={{
-                padding: "3px 9px", borderRadius: 12,
-                border: "1px solid var(--border)", background: "#f5f7fa",
-                color: "var(--text-secondary)", fontSize: 11, cursor: "pointer",
-                fontWeight: 600, transition: "all 0.15s",
-              }}
-              onMouseOver={e => { e.currentTarget.style.background = "var(--accent-light)"; e.currentTarget.style.color = "var(--nav-active-color)"; }}
-              onMouseOut={e => { e.currentTarget.style.background = "#f5f7fa"; e.currentTarget.style.color = "var(--text-secondary)"; }}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-      )}
-      <ChatLayout
-        messages={messages}
-        loading={loading}
-        input={input}
-        onInputChange={setInput}
-        onSend={send}
-        quickButtons={quickButtons}
-      />
-    </>
+    <ChatLayout
+      messages={messages}
+      loading={loading}
+      input={input}
+      onInputChange={setInput}
+      onSend={send}
+      quickButtons={quickButtons}
+      recentTickers={recentTickers}
+    />
   );
 }

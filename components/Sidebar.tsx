@@ -181,90 +181,94 @@ export default function Sidebar() {
 
   // ── 모바일: 드로어 ────────────────────────────────────────────────
   const currentPage = navItems.find(n => pathname.startsWith(n.href));
+  // /chat 페이지는 ChatLayout이 자체 헤더를 보유(position:fixed) → Sidebar 헤더 생략
+  const isChatPage = pathname.startsWith("/chat");
 
   return (
     <>
-      {/* 모바일 상단 헤더 — safe-area-inset-top 직접 적용 */}
-      <header style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 200,
-        height: "calc(56px + env(safe-area-inset-top, 0px))",
-        paddingTop: "env(safe-area-inset-top, 0px)",
-        paddingLeft: 16, paddingRight: 16, paddingBottom: 8,
-        background: "#fff",
-        borderBottom: "1px solid var(--border)",
-        display: "flex", alignItems: "center",
-        gap: 12,
-        boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-      }}>
-        {/* 햄버거 버튼 */}
-        <button
-          onClick={() => setOpen(true)}
-          style={{
-            width: 40, height: 40, borderRadius: 10,
-            border: "none", background: "#f5f7fa",
-            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-            gap: 5, cursor: "pointer", flexShrink: 0,
-            WebkitTapHighlightColor: "transparent",
-          }}
-          aria-label="메뉴 열기"
-        >
-          {[0,1,2].map(i => (
-            <span key={i} style={{
-              width: 18, height: 2, borderRadius: 2,
-              background: "var(--text-secondary)", display: "block",
-            }} />
-          ))}
-        </button>
-
-        {/* 모바일 헤더 로고 */}
-        <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
-          <span style={{
-            fontFamily: "'Georgia', 'Noto Serif KR', serif",
-            fontStyle: "italic",
-            fontWeight: 800,
-            fontSize: 20,
-            color: "#1a3a2a",
-            letterSpacing: "-0.3px",
-            lineHeight: 1,
-          }}>예리</span>
-          <span style={{
-            fontSize: 18, color: "var(--accent)", marginLeft: 1,
-            filter: "drop-shadow(0 1px 2px rgba(63,202,107,0.4))",
-          }}>♥</span>
-        </div>
-
-        {/* 현재 페이지 이름 */}
-        {currentPage && (
-          <span style={{
-            marginLeft: "auto", fontSize: 12, fontWeight: 600,
-            color: "var(--nav-active-color)",
-            background: "var(--nav-active-bg)",
-            borderRadius: 8, padding: "3px 10px",
-          }}>
-            {currentPage.icon} {currentPage.label}
-          </span>
-        )}
-
-        {/* 알림 배지 (워치리스트 아닐 때도 상단에 표시) */}
-        {alertCount > 0 && !pathname.startsWith("/watchlist") && (
-          <div
-            onClick={() => router.push("/watchlist")}
+      {/* 모바일 상단 헤더 — /chat 페이지에선 숨김 (ChatLayout이 자체 헤더 보유) */}
+      {!isChatPage && (
+        <header style={{
+          position: "fixed", top: 0, left: 0, right: 0, zIndex: 200,
+          height: "calc(56px + env(safe-area-inset-top, 0px))",
+          paddingTop: "env(safe-area-inset-top, 0px)",
+          paddingLeft: 16, paddingRight: 16, paddingBottom: 8,
+          background: "#fff",
+          borderBottom: "1px solid var(--border)",
+          display: "flex", alignItems: "center",
+          gap: 12,
+          boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+        }}>
+          {/* 햄버거 버튼 */}
+          <button
+            onClick={() => setOpen(true)}
             style={{
-              width: 36, height: 36, borderRadius: 10,
-              border: "none", background: "#fff5f5",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", position: "relative", flexShrink: 0,
+              width: 40, height: 40, borderRadius: 10,
+              border: "none", background: "#f5f7fa",
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+              gap: 5, cursor: "pointer", flexShrink: 0,
+              WebkitTapHighlightColor: "transparent",
             }}
+            aria-label="메뉴 열기"
           >
-            🔔
+            {[0,1,2].map(i => (
+              <span key={i} style={{
+                width: 18, height: 2, borderRadius: 2,
+                background: "var(--text-secondary)", display: "block",
+              }} />
+            ))}
+          </button>
+
+          {/* 모바일 헤더 로고 */}
+          <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
             <span style={{
-              position: "absolute", top: 5, right: 5,
-              width: 8, height: 8, borderRadius: "50%",
-              background: "#ef4444",
-            }} />
+              fontFamily: "'Georgia', 'Noto Serif KR', serif",
+              fontStyle: "italic",
+              fontWeight: 800,
+              fontSize: 20,
+              color: "#1a3a2a",
+              letterSpacing: "-0.3px",
+              lineHeight: 1,
+            }}>예리</span>
+            <span style={{
+              fontSize: 18, color: "var(--accent)", marginLeft: 1,
+              filter: "drop-shadow(0 1px 2px rgba(63,202,107,0.4))",
+            }}>♥</span>
           </div>
-        )}
-      </header>
+
+          {/* 현재 페이지 이름 */}
+          {currentPage && (
+            <span style={{
+              marginLeft: "auto", fontSize: 12, fontWeight: 600,
+              color: "var(--nav-active-color)",
+              background: "var(--nav-active-bg)",
+              borderRadius: 8, padding: "3px 10px",
+            }}>
+              {currentPage.icon} {currentPage.label}
+            </span>
+          )}
+
+          {/* 알림 배지 (워치리스트 아닐 때도 상단에 표시) */}
+          {alertCount > 0 && !pathname.startsWith("/watchlist") && (
+            <div
+              onClick={() => router.push("/watchlist")}
+              style={{
+                width: 36, height: 36, borderRadius: 10,
+                border: "none", background: "#fff5f5",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer", position: "relative", flexShrink: 0,
+              }}
+            >
+              🔔
+              <span style={{
+                position: "absolute", top: 5, right: 5,
+                width: 8, height: 8, borderRadius: "50%",
+                background: "#ef4444",
+              }} />
+            </div>
+          )}
+        </header>
+      )}
 
       {/* 드로어 오버레이 */}
       {open && (
@@ -348,8 +352,8 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* 모바일 본문 상단 여백 — 헤더 + safe-area 만큼 */}
-      <div style={{ height: "calc(56px + env(safe-area-inset-top, 0px))", flexShrink: 0 }} />
+      {/* 모바일 본문 상단 여백 — /chat 페이지는 ChatLayout이 직접 처리 */}
+      {!isChatPage && <div style={{ height: "calc(56px + env(safe-area-inset-top, 0px))", flexShrink: 0 }} />}
 
       <style>{`
         @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }

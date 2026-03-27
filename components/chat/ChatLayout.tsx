@@ -1,4 +1,5 @@
-// 채팅 레이아웃 — 헤더+메시지+입력창 배치
+// 채팅 레이아웃 — 카카오톡형 고정 레이아웃 (모바일 완전 대응)
+// 전략: position:fixed + dvh로 height 체인 문제를 완전히 우회
 "use client";
 import { useEffect, useRef } from "react";
 import MessageBubble, { DateDivider, type Message } from "./MessageBubble";
@@ -12,6 +13,7 @@ interface Props {
   onSend: (text?: string) => void;
   quickButtons?: string[];
   title?: string;
+  recentTickers?: string[];
 }
 
 function formatDateLabel(dateStr: string): string {
@@ -21,20 +23,36 @@ function formatDateLabel(dateStr: string): string {
 }
 
 export default function ChatLayout({
-  messages, loading, input, onInputChange, onSend, quickButtons, title = "예리 AI",
+  messages, loading, input, onInputChange, onSend, quickButtons, title = "예리 AI", recentTickers = [],
 }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "var(--bg-chat)" }}>
+    /*
+      position:fixed + inset:0 → viewport 전체를 직접 점유.
+      body/main의 height 체인과 완전히 분리되어 항상 화면 꽉 채움.
+      Sidebar의 spacer div를 덮기 위해 z-index를 사용.
+    */
+    <div style={{
+      position: "fixed",
+      inset: 0,
+      display: "flex",
+      flexDirection: "column",
+      background: "var(--bg-chat)",
+      zIndex: 10,
+    }}>
 
-      {/* ── 헤더 ── */}
+      {/* ── 채팅 자체 헤더 (모바일에선 Sidebar fixed header 위에 올라감) ── */}
       <div style={{
-        padding: "13px 20px",
+        paddingTop: "calc(env(safe-area-inset-top, 0px) + 13px)",
+        paddingBottom: "13px",
+        paddingLeft: "20px",
+        paddingRight: "20px",
         background: "var(--bg-header)",
         borderBottom: "1px solid var(--border)",
         display: "flex",
@@ -85,14 +103,51 @@ export default function ChatLayout({
         </a>
       </div>
 
-      {/* ── 메시지 목록 ── */}
-      <div style={{
-        flex: 1, overflowY: "auto",
-        padding: "20px 16px",
-        display: "flex", flexDirection: "column", gap: 6,
-        WebkitOverflowScrolling: "touch",
-        overscrollBehavior: "contain",
-      }}>
+      {/* ── 최근 분석 바 ── */}
+      {recentTickers.length > 0 && (
+        <div style={{
+          padding: "8px 16px",
+          background: "#fff",
+          borderBottom: "1px solid var(--border)",
+          display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap",
+          flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 10, color: "var(--text-muted)", fontWeight: 600, flexShrink: 0 }}>
+            최근 분석:
+          </span>
+          {recentTickers.map(t => (
+            <button
+              key={t}
+              onClick={() => onSend(`${t} 분석해줘`)}
+              disabled={loading}
+              style={{
+                padding: "3px 9px", borderRadius: 12,
+                border: "1px solid var(--border)", background: "#f5f7fa",
+                color: "var(--text-secondary)", fontSize: 11, cursor: "pointer",
+                fontWeight: 600, transition: "all 0.15s",
+              }}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ── 메시지 목록 (flex:1 + overflow:auto → 나머지 공간 모두 차지) ── */}
+      <div
+        ref={scrollRef}
+        style={{
+          flex: 1,
+          overflowY: "auto",
+          overflowX: "hidden",
+          padding: "20px 16px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 6,
+          WebkitOverflowScrolling: "touch",
+          overscrollBehavior: "contain",
+        }}
+      >
         {messages.map((m, i) => {
           const prevM = messages[i - 1];
           const isConsecutiveBot = m.role === "bot" && prevM?.role === "bot";
@@ -139,7 +194,7 @@ export default function ChatLayout({
         <div ref={bottomRef} />
       </div>
 
-      {/* ── 입력창 ── */}
+      {/* ── 입력창 (flexShrink:0 → 절대 줄어들지 않음) ── */}
       <ChatInput
         value={input}
         onChange={onInputChange}
