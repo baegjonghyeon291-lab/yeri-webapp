@@ -225,8 +225,8 @@ a { text-decoration: none; color: inherit; }
   
   .mobile-hide { display: none !important; }
   
-  /* 큰 버튼 터치 타겟 보정 */
-  button {
+  /* 큰 버튼 터치 타겟 보정 — 헤더/인라인 버튼 제외 */
+  button:not([data-no-min-height]) {
     min-height: 44px; /* iOS HIG 권장 터치 최소값 */
   }
   

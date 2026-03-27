@@ -32,6 +32,13 @@ export default function Sidebar() {
   // 라우트 변경 시 드로어 닫기
   useEffect(() => { setOpen(false); }, [pathname]);
 
+  // ChatLayout의 ≡ 버튼에서 발생하는 커스텀 이벤트 수신
+  useEffect(() => {
+    const handler = () => setOpen(true);
+    window.addEventListener("open-sidebar", handler);
+    return () => window.removeEventListener("open-sidebar", handler);
+  }, []);
+
   // 알림 배지 폴링
   useEffect(() => {
     const sessionId = getSessionId();
@@ -317,10 +324,12 @@ export default function Sidebar() {
           {/* 닫기 버튼 */}
           <button
             onClick={() => setOpen(false)}
+            data-no-min-height
             style={{
-              width: 32, height: 32, borderRadius: 8, border: "none",
+              width: 32, height: 32, minHeight: 32, borderRadius: 8, border: "none",
               background: "#f5f7fa", fontSize: 16, cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
+              padding: 0,
             }}
           >✕</button>
         </div>

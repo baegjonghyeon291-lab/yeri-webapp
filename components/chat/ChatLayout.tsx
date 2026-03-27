@@ -47,61 +47,96 @@ export default function ChatLayout({
       zIndex: 10,
     }}>
 
-      {/* ── 채팅 자체 헤더 (모바일에선 Sidebar fixed header 위에 올라감) ── */}
+      {/* ── 채팅 자체 헤더 ── */}
       <div style={{
         paddingTop: "calc(env(safe-area-inset-top, 0px) + 13px)",
         paddingBottom: "13px",
-        paddingLeft: "20px",
-        paddingRight: "20px",
+        paddingLeft: "16px",
+        paddingRight: "16px",
         background: "var(--bg-header)",
         borderBottom: "1px solid var(--border)",
         display: "flex",
         alignItems: "center",
-        justifyContent: "space-between",
+        gap: 10,
         flexShrink: 0,
+        minHeight: 0,
         boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{
-            width: 38, height: 38, borderRadius: 12,
-            background: "linear-gradient(135deg, #2ea85a 0%, #3fca6b 100%)",
-            display: "flex", alignItems: "center", justifyContent: "center",
+        {/* ≡ 햄버거 버튼 — 모바일에서 사이드바 드로어 오픈 */}
+        <button
+          onClick={() => window.dispatchEvent(new CustomEvent("open-sidebar"))}
+          aria-label="메뉴 열기"
+          data-no-min-height
+          style={{
+            width: 40, height: 40, minHeight: 40, borderRadius: 10,
+            border: "none", background: "#f5f7fa",
+            display: "flex", flexDirection: "column",
+            alignItems: "center", justifyContent: "center",
+            gap: 5, cursor: "pointer", flexShrink: 0,
+            WebkitTapHighlightColor: "transparent",
+            touchAction: "manipulation",
+            padding: 0,
+          }}
+        >
+          {[0,1,2].map(i => (
+            <span key={i} style={{
+              width: 18, height: 2, borderRadius: 2,
+              background: "var(--text-secondary)", display: "block",
+            }} />
+          ))}
+        </button>
+
+        {/* 예리♡ 타이틀 */}
+        <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
+          <span style={{
+            fontFamily: "'Georgia', 'Noto Serif KR', serif",
+            fontStyle: "italic",
+            fontWeight: 800,
             fontSize: 20,
-            boxShadow: "0 2px 8px rgba(63,202,107,0.25)",
-            flexShrink: 0,
-          }}>
-            📈
-          </div>
-          <div>
-            <div style={{ fontWeight: 800, fontSize: 15, color: "#1a2233", letterSpacing: "-0.02em" }}>{title}</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 1 }}>
-              <div style={{
-                width: 6, height: 6, borderRadius: "50%",
-                background: "#3fca6b",
-                boxShadow: "0 0 5px rgba(63,202,107,0.7)",
-              }} />
-              <span style={{ fontSize: 11, color: "#3fca6b", fontWeight: 500 }}>분석 가능</span>
-              <span style={{ fontSize: 9, color: "var(--text-muted)", marginLeft: 4, fontWeight: 500 }}>
-                v:{process.env.NEXT_PUBLIC_BUILD_HASH || "dev"}
-              </span>
-            </div>
+            color: "#1a3a2a",
+            letterSpacing: "-0.3px",
+            lineHeight: 1,
+          }}>예리</span>
+          <span style={{
+            fontSize: 18, color: "var(--accent)", marginLeft: 1,
+            filter: "drop-shadow(0 1px 2px rgba(63,202,107,0.4))",
+          }}>♥</span>
+        </div>
+
+        {/* 가운데: 봇 상태 정보 */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 700, fontSize: 13, color: "#1a2233", letterSpacing: "-0.02em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 1 }}>
+            <div style={{
+              width: 6, height: 6, borderRadius: "50%",
+              background: "#3fca6b",
+              boxShadow: "0 0 5px rgba(63,202,107,0.7)",
+            }} />
+            <span style={{ fontSize: 10, color: "#3fca6b", fontWeight: 500 }}>분석 가능</span>
+            <span style={{ fontSize: 9, color: "var(--text-muted)", marginLeft: 2, fontWeight: 500 }}>
+              v:{process.env.NEXT_PUBLIC_BUILD_HASH || "dev"}
+            </span>
           </div>
         </div>
+
         {/* 관심종목 바로가기 */}
         <a href="/watchlist" style={{
-          padding: "6px 12px",
+          padding: "6px 11px",
           borderRadius: 20,
           background: "var(--accent-light)",
           color: "var(--nav-active-color)",
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: 600,
           border: "1px solid #c8efd8",
           cursor: "pointer",
           textDecoration: "none",
+          whiteSpace: "nowrap",
+          flexShrink: 0,
         }}>
-          ⭐ 관심종목
+          ⭐ 관심
         </a>
       </div>
+
 
       {/* ── 최근 분석 바 ── */}
       {recentTickers.length > 0 && (
