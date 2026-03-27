@@ -234,12 +234,11 @@ a { text-decoration: none; color: inherit; }
 
 /* ── PWA standalone 모드 추가 보정 ── */
 @media (display-mode: standalone) {
-  /* standalone에서 safe-area 재확인 */
+  /* fixed 헤더가 자체 safe-area 처리 → body에서는 제거 */
   body {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-top: 0;
+    padding-bottom: 0;
   }
-  /* 모바일 헤더가 safe-area 위로 올라가도록 */
   main {
     flex: 1;
     min-height: 0;
