@@ -128,6 +128,16 @@ export default function PortfolioPage() {
     return { items: processed, totalInvested, totalCurrent, totalPnl, totalPnlPct };
   }, [items, marketData]);
 
+  // 시세 수신 완료 여부
+  const allPricesLoaded = useMemo(() => {
+    const activeTickers = items.filter(i => i.ticker.trim().length > 0);
+    if (activeTickers.length === 0) return false;
+    return activeTickers.every(i => {
+      const live = marketData[i.ticker];
+      return live && live.price > 0;
+    });
+  }, [items, marketData]);
+
   // 유효성 검사
   const isValid = useMemo(() => {
     if (items.length === 0) return false;
@@ -183,19 +193,49 @@ export default function PortfolioPage() {
     setLoadingStep(1);
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => { controller.abort(); }, 30000);
+    const timeout = setTimeout(() => { controller.abort(); }, 45000);
 
     try {
       setTimeout(() => setLoadingStep(2), 2000);
       setTimeout(() => setLoadingStep(3), 5000);
 
-      const totalVal = stats.totalCurrent || stats.totalInvested;
-      const itemsWithWeight = stats.items
+      // ── 시세 강제 최신화 (AI에 정확한 데이터 전달 보장) ──
+      const activeTickers = items.filter(i => i.ticker.trim() && i.quantity > 0 && i.avgPrice > 0).map(i => i.ticker);
+      let freshMarket = { ...marketData };
+      try {
+        const priceRes = await fetch(`${API}/api/stocks/min-data?tickers=${activeTickers.join(",")}`);
+        const priceData = await priceRes.json();
+        if (priceData.ok) {
+          freshMarket = { ...freshMarket, ...priceData.data };
+          setMarketData(freshMarket);
+        }
+      } catch { /* 기존 데이터로 진행 */ }
+
+      const processedItems = items
         .filter(i => i.ticker.trim() && i.quantity > 0 && i.avgPrice > 0)
-        .map(i => ({
-          ...i,
-          weight: totalVal > 0 ? Math.round(((i.current || i.invested) / totalVal) * 100) : 0
-        }));
+        .map(i => {
+          const live = freshMarket[i.ticker] || {};
+          const currentPrice = live.price || 0;
+          const invested = i.quantity * i.avgPrice;
+          const current = i.quantity * currentPrice;
+          return { ...i, currentPrice, invested, current };
+        });
+
+      const totalVal = processedItems.reduce((sum, i) => sum + (i.current || i.invested), 0);
+      const itemsWithWeight = processedItems.map(i => ({
+        ...i,
+        weight: totalVal > 0 ? Math.round(((i.current || i.invested) / totalVal) * 100) : 0
+      }));
+
+      // 시세 미수신 종목이 있으면 경고
+      const missingPrice = itemsWithWeight.filter(i => !i.currentPrice || i.currentPrice <= 0);
+      if (missingPrice.length > 0) {
+        setError(`${missingPrice.map(i => i.ticker).join(", ")} 시세를 가져오지 못했습니다. 잠시 후 다시 시도해주세요.`);
+        setLoading(false);
+        setLoadingStep(0);
+        clearTimeout(timeout);
+        return;
+      }
 
       const res = await fetch(`${API}/api/portfolio/analyze`, {
         method: "POST",
@@ -370,7 +410,7 @@ export default function PortfolioPage() {
       {/* 상단 총 자산 카드 */}
       <div style={{ background: "linear-gradient(135deg, #1a3a2a 0%, #2ea85a 100%)", borderRadius: 16, padding: "20px 24px", color: "#fff", marginBottom: 24, boxShadow: "0 4px 12px rgba(46,168,90,0.2)" }}>
         <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>총 자산 가치</div>
-        <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 12 }}>{stats.totalCurrent.toLocaleString()} <span style={{ fontSize: 14, fontWeight: 400 }}>원/달러 합산</span></div>
+        <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 12 }}>{(stats.totalCurrent || stats.totalInvested).toLocaleString()} <span style={{ fontSize: 14, fontWeight: 400 }}>{stats.totalCurrent > 0 ? "원/달러 합산" : "매입액 기준"}</span></div>
         <div style={{ display: "flex", gap: 16 }}>
           <div>
             <div style={{ fontSize: 11, opacity: 0.7 }}>총 손익</div>
@@ -454,7 +494,7 @@ export default function PortfolioPage() {
             })}
             <button onClick={addItem} style={{ width: "100%", padding: "12px", borderRadius: 12, border: "1.5px dashed var(--border)", background: "transparent", color: "var(--text-secondary)", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>+ 종목 추가하기</button>
           </div>
-          <button onClick={analyze} disabled={loading || !isValid || duplicateTickers.size > 0} style={{ width: "100%", padding: "16px", borderRadius: 16, border: "none", background: (!isValid || duplicateTickers.size > 0) ? "#e5e9f0" : "var(--accent)", color: (!isValid || duplicateTickers.size > 0) ? "var(--text-muted)" : "#fff", fontWeight: 800, fontSize: 16, cursor: isValid && duplicateTickers.size === 0 ? "pointer" : "not-allowed", boxShadow: isValid && duplicateTickers.size === 0 ? "0 4px 14px rgba(63,202,107,0.3)" : "none" }}>🚀 AI 포트폴리오 정밀 분석</button>
+          <button onClick={analyze} disabled={loading || !isValid || duplicateTickers.size > 0} style={{ width: "100%", padding: "16px", borderRadius: 16, border: "none", background: (!isValid || duplicateTickers.size > 0) ? "#e5e9f0" : "var(--accent)", color: (!isValid || duplicateTickers.size > 0) ? "var(--text-muted)" : "#fff", fontWeight: 800, fontSize: 16, cursor: isValid && duplicateTickers.size === 0 ? "pointer" : "not-allowed", boxShadow: isValid && duplicateTickers.size === 0 ? "0 4px 14px rgba(63,202,107,0.3)" : "none" }}>{isValid && !allPricesLoaded ? "🚀 AI 분석 (시세 로딩 중...)" : "🚀 AI 포트폴리오 정밀 분석"}</button>
           {!isValid && <p style={{ textAlign: "center", fontSize: 11, color: "#fb7185", marginTop: 12, fontWeight: 500 }}>* 모든 티커와 보유 수량, 평단을 올바르게 입력해주세요.</p>}
           {duplicateTickers.size > 0 && <p style={{ textAlign: "center", fontSize: 11, color: "#d97706", marginTop: 8, fontWeight: 500 }}>* 중복 종목을 정리해주세요: {[...duplicateTickers].join(", ")}</p>}
           <button onClick={resetPortfolio} style={{ width: "100%", padding: "12px", marginTop: 16, borderRadius: 12, border: "1px solid #fca5a5", background: "#fff8f8", color: "#d64060", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>🗑️ 포트폴리오 초기화</button>
