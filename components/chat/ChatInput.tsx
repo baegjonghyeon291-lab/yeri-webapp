@@ -4,7 +4,7 @@ import { useRef, useEffect, useState, useCallback } from "react";
 
 const API = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001";
 
-interface Candidate { ticker: string; name: string; market: string; confidence: number }
+interface Candidate { ticker: string; name: string; market: string; confidence: number; exchange?: string; currentPrice?: number; changePct?: number; }
 interface Props {
   value: string;
   onChange: (val: string) => void;
@@ -85,7 +85,7 @@ export default function ChatInput({ value, onChange, onSend, onSendText, loading
       flexShrink: 0,
       boxShadow: "0 -1px 8px rgba(0,0,0,0.04)",
       position: "relative",
-      paddingBottom: "env(safe-area-inset-bottom, 0px)",
+      paddingBottom: "calc(16px + env(safe-area-inset-bottom, 0px))",
     }}>
       {/* 종목 후보 드롭다운 */}
       {showDrop && candidates.length > 0 && (
@@ -108,7 +108,7 @@ export default function ChatInput({ value, onChange, onSend, onSendText, loading
               onClick={() => selectCandidate(c)}
               style={{
                 display: "flex", alignItems: "center", gap: 8,
-                width: "100%", padding: "8px 14px", border: "none",
+                width: "100%", padding: "12px 14px", border: "none",
                 background: "transparent", cursor: "pointer", textAlign: "left",
                 borderBottom: i < candidates.length - 1 ? "1px solid #f3f4f6" : "none",
                 transition: "background 0.1s",
@@ -118,11 +118,29 @@ export default function ChatInput({ value, onChange, onSend, onSendText, loading
             >
               <span style={{
                 fontWeight: 700, fontSize: 12, color: "#059669",
-                background: "#ecfdf5", borderRadius: 4, padding: "1px 6px", flexShrink: 0,
+                background: "#ecfdf5", borderRadius: 4, padding: "3px 8px", flexShrink: 0,
               }}>{c.ticker}</span>
-              <span style={{ fontSize: 12, color: "var(--text-primary)", flex: 1 }}>{c.name}</span>
-              <span style={{ fontSize: 10, color: "var(--text-muted)", flexShrink: 0 }}>
-                {c.market} · {Math.round(c.confidence * 100)}%
+              <span style={{ fontSize: 14, color: "var(--text-primary)", flex: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {c.name}
+              </span>
+              
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", flexShrink: 0, marginRight: 8 }}>
+                {c.currentPrice ? (
+                  <span style={{ fontSize: 12, fontWeight: 600, color: "var(--text-primary)" }}>
+                    {c.market === "KR" ? "₩" : "$"}{c.currentPrice.toLocaleString(undefined, { minimumFractionDigits: c.market === "KR" ? 0 : 2, maximumFractionDigits: c.market === "KR" ? 0 : 2 })}
+                  </span>
+                ) : (
+                  <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{c.exchange || c.market}</span>
+                )}
+                {c.changePct != null && (
+                  <span style={{ fontSize: 10, color: c.changePct > 0 ? "#ef4444" : c.changePct < 0 ? "#3b82f6" : "#6b7280" }}>
+                    {c.changePct > 0 ? "▲" : c.changePct < 0 ? "▼" : ""}{Math.abs(c.changePct).toFixed(2)}%
+                  </span>
+                )}
+              </div>
+
+              <span style={{ fontSize: 11, color: "var(--text-muted)", flexShrink: 0 }}>
+                {Math.round(c.confidence * 100)}%
               </span>
             </button>
           ))}
@@ -137,7 +155,7 @@ export default function ChatInput({ value, onChange, onSend, onSendText, loading
               key={q}
               onClick={() => onQuick?.(q)}
               style={{
-                padding: "6px 14px", borderRadius: 20, fontSize: 12,
+                padding: "8px 16px", borderRadius: 20, fontSize: 13,
                 background: "var(--accent-light)", border: "1px solid #c8efd8",
                 color: "var(--nav-active-color)", cursor: "pointer",
                 whiteSpace: "nowrap", flexShrink: 0, fontWeight: 500,
@@ -151,7 +169,7 @@ export default function ChatInput({ value, onChange, onSend, onSendText, loading
       )}
 
       {/* 입력 + 전송 */}
-      <div style={{ display: "flex", gap: 8, padding: "10px 14px 14px", alignItems: "flex-end" }}>
+      <div style={{ display: "flex", gap: 8, padding: "10px 14px 0", alignItems: "flex-end" }}>
         <textarea
           ref={textareaRef}
           value={value}
@@ -162,9 +180,9 @@ export default function ChatInput({ value, onChange, onSend, onSendText, loading
           placeholder="종목이나 질문을 입력해줘 (Enter 전송)"
           rows={1}
           style={{
-            flex: 1, padding: "10px 16px", borderRadius: 24, resize: "none",
+            flex: 1, padding: "12px 16px", borderRadius: 24, resize: "none",
             background: "#f5f7fa", border: "1.5px solid var(--border-input)",
-            color: "var(--text-primary)", fontSize: 14, outline: "none",
+            color: "var(--text-primary)", fontSize: 15, outline: "none",
             fontFamily: "inherit", lineHeight: 1.5, maxHeight: 120, overflowY: "auto",
             transition: "border-color 0.15s",
           }}
@@ -176,7 +194,7 @@ export default function ChatInput({ value, onChange, onSend, onSendText, loading
           disabled={!canSend}
           className="send-btn"
           style={{
-            width: 42, height: 42, borderRadius: "50%", border: "none",
+            width: 44, height: 44, borderRadius: "50%", border: "none",
             background: canSend ? "var(--accent)" : "#e5e9f0",
             color: canSend ? "#fff" : "var(--text-muted)",
             fontWeight: 700, cursor: canSend ? "pointer" : "not-allowed",
