@@ -59,14 +59,10 @@ export default function Sidebar() {
     const active      = pathname.startsWith(item.href);
     const isWatchlist = item.href === "/watchlist";
 
-    // /chat 페이지는 position:fixed 레이아웃 때문에 client-side 전환 시 크래시 발생
-    // → full page reload로 안전하게 이동
+    // ChatLayout의 position:fixed 레이아웃이 Next.js App Router의
+    // 클라이언트 사이드 전환과 충돌 → 모든 라우트를 full page reload로 처리
     const navigate = (href: string) => {
-      if (href === "/chat") {
-        window.location.href = href;
-      } else {
-        router.push(href);
-      }
+      window.location.href = href;
     };
 
     return (
