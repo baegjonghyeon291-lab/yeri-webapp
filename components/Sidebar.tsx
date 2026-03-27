@@ -59,12 +59,22 @@ export default function Sidebar() {
     const active      = pathname.startsWith(item.href);
     const isWatchlist = item.href === "/watchlist";
 
+    // /chat 페이지는 position:fixed 레이아웃 때문에 client-side 전환 시 크래시 발생
+    // → full page reload로 안전하게 이동
+    const navigate = (href: string) => {
+      if (href === "/chat") {
+        window.location.href = href;
+      } else {
+        router.push(href);
+      }
+    };
+
     return (
       <div
         role="button"
         tabIndex={0}
-        onClick={() => router.push(item.href)}
-        onKeyDown={e => e.key === "Enter" && router.push(item.href)}
+        onClick={() => navigate(item.href)}
+        onKeyDown={e => e.key === "Enter" && navigate(item.href)}
         style={{
           display: "flex",
           alignItems: "center",
