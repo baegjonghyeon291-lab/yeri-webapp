@@ -172,18 +172,23 @@ a { text-decoration: none; color: inherit; }
 
 /* ── 모바일 (<768px) ── */
 @media (max-width: 767px) {
-  /* 터치 스크롤 허용 */
-  main > * { touch-action: pan-y; }
-
-  /* ── safe-area 하단 보정 ── */
-  /* 채팅 입력창이 자체적으로 safe-area 처리함 → main에서는 제거 */
+  /* 모바일에서 body를 column flex로 전환 (spacer → main 수직 스택) */
+  body {
+    flex-direction: column !important;
+  }
   main {
+    height: auto !important;
+    min-height: 0 !important;
     padding-bottom: 0 !important;
   }
 
-  /* 헤더 바로 아래 첫 번째 자식에 상단 여백 확보 */
+  /* 터치 스크롤 허용 */
+  main > * { touch-action: pan-y; }
+
+  /* 헤더 바로 아래 첫 번째 자식에 상단 여백 확보 (비채팅 페이지용) */
   main > div:first-child {
-    padding-top: max(12px, env(safe-area-inset-top, 0px));
+    /* 채팅 페이지는 자체 헤더가 있으므로 최소값 적용 */
+    padding-top: 0;
   }
 
   /* 퀵버튼 터치 영역 확장 */

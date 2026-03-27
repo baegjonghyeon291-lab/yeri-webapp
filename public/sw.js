@@ -1,5 +1,5 @@
 // 최소 PWA Service Worker — 매 배포마다 캐시 갱신
-const CACHE_NAME = 'jhyr-20260327-1008';
+const CACHE_NAME = 'jhyr-20260327-1042';
 
 // 개발 모드 감지 (localhost 또는 IP:port)
 const IS_DEV = self.location.hostname === 'localhost' ||
