@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import ChatLayout from "@/components/chat/ChatLayout";
 import type { Message } from "@/components/chat/MessageBubble";
@@ -24,9 +24,28 @@ function now() {
   return new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
 }
 
-export default function ChatClient() {
+/**
+ * useSearchParams()를 안전하게 격리하는 내부 컴포넌트.
+ * Next.js 16에서 useSearchParams()는 Suspense 경계 안에서만 호출해야 하며,
+ * 이를 위반하면 클라이언트 사이드 네비게이션 시 "This page couldn't load" 에러 발생.
+ */
+function SearchParamsReader({ onAnalyze }: { onAnalyze: (ticker: string) => void }) {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const autoAnalyzed = useRef(false);
+
+  useEffect(() => {
+    const ticker = searchParams.get("analyze");
+    if (!ticker || autoAnalyzed.current) return;
+    autoAnalyzed.current = true;
+    router.replace("/chat", { scroll: false });
+    setTimeout(() => { onAnalyze(`${ticker} 지금 바로 분석해줘`); }, 400);
+  }, [searchParams, onAnalyze, router]);
+
+  return null;
+}
+
+export default function ChatClient() {
   const [sessionId, setSessionId] = useState("");
   const [recentTickers, setRecentTickers] = useState<string[]>([]);
   const [portfolioTickers, setPortfolioTickers] = useState<string[]>([]);
@@ -42,7 +61,6 @@ export default function ChatClient() {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const autoAnalyzed = useRef(false);
 
   useEffect(() => {
     setSessionId(getSessionId());
@@ -55,15 +73,6 @@ export default function ChatClient() {
       } catch (e) {}
     }
   }, []);
-
-  // URL ?analyze=TICKER 파라미터 감지 → 자동 분석 실행
-  useEffect(() => {
-    const ticker = searchParams.get("analyze");
-    if (!ticker || autoAnalyzed.current || !sessionId) return;
-    autoAnalyzed.current = true;
-    router.replace("/chat", { scroll: false });
-    setTimeout(() => { send(`${ticker} 지금 바로 분석해줘`); }, 400);
-  }, [searchParams, sessionId]);
 
   async function send(text?: string) {
     const msg = (text ?? input).trim();
@@ -128,14 +137,19 @@ export default function ChatClient() {
   ];
 
   return (
-    <ChatLayout
-      messages={messages}
-      loading={loading}
-      input={input}
-      onInputChange={setInput}
-      onSend={send}
-      quickButtons={quickButtons}
-      recentTickers={recentTickers}
-    />
+    <>
+      <Suspense fallback={null}>
+        <SearchParamsReader onAnalyze={send} />
+      </Suspense>
+      <ChatLayout
+        messages={messages}
+        loading={loading}
+        input={input}
+        onInputChange={setInput}
+        onSend={send}
+        quickButtons={quickButtons}
+        recentTickers={recentTickers}
+      />
+    </>
   );
 }
