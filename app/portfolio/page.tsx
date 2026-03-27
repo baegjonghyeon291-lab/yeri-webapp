@@ -49,12 +49,27 @@ export default function PortfolioPage() {
   const [suggestions, setSuggestions] = useState<Record<number, Suggestion[]>>({});
   const [activeSugIdx, setActiveSugIdx] = useState<number | null>(null);
   const debounceTimers = useRef<Record<number, NodeJS.Timeout>>({});
+  const searchCacheRef = useRef<Map<string, any>>(typeof window !== "undefined" ? new Map() : null as any);
 
   const fetchSuggestions = useCallback(async (idx: number, query: string) => {
     if (query.length < 1) { setSuggestions(p => { const n = { ...p }; delete n[idx]; return n; }); return; }
+    
+    const cache = searchCacheRef.current;
+    if (cache && cache.has(query)) {
+      const data = cache.get(query);
+      if (data.ok && data.candidates?.length > 0) {
+        setSuggestions(p => ({ ...p, [idx]: data.candidates.slice(0, 5) }));
+        setActiveSugIdx(idx);
+      } else {
+        setSuggestions(p => { const n = { ...p }; delete n[idx]; return n; });
+      }
+      return;
+    }
+
     try {
       const res = await fetch(`${API}/api/suggest?q=${encodeURIComponent(query)}`);
       const data = await res.json();
+      if (cache) cache.set(query, data);
       if (data.ok && data.candidates?.length > 0) {
         setSuggestions(p => ({ ...p, [idx]: data.candidates.slice(0, 5) }));
         setActiveSugIdx(idx);

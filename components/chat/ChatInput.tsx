@@ -24,12 +24,14 @@ function useDebounce<T>(value: T, delay: number): T {
   return debounced;
 }
 
+const searchCache = new Map<string, any>();
+
 export default function ChatInput({ value, onChange, onSend, onSendText, loading, quickButtons, onQuick }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [suggestTier, setSuggestTier] = useState<string>("");
   const [showDrop, setShowDrop] = useState(false);
-  const debouncedValue = useDebounce(value, 400);
+  const debouncedValue = useDebounce(value, 300);
 
   // 자동 높이 조절
   useEffect(() => {
@@ -44,9 +46,24 @@ export default function ChatInput({ value, onChange, onSend, onSendText, loading
     const q = debouncedValue.trim();
     // 2자 이상, 전송 직후 비울 때 제외
     if (q.length < 2 || q.length > 30) { setCandidates([]); setShowDrop(false); return; }
+
+    if (searchCache.has(q)) {
+      const data = searchCache.get(q);
+      if (data.ok && data.tier !== 'HIGH' && data.candidates?.length > 0) {
+        setCandidates(data.candidates.slice(0, 5));
+        setSuggestTier(data.tier);
+        setShowDrop(true);
+      } else {
+        setCandidates([]);
+        setShowDrop(false);
+      }
+      return;
+    }
+
     fetch(`${API}/api/suggest?q=${encodeURIComponent(q)}`)
       .then(r => r.json())
       .then(data => {
+        searchCache.set(q, data);
         if (data.ok && data.tier !== 'HIGH' && data.candidates?.length > 0) {
           setCandidates(data.candidates.slice(0, 5));
           setSuggestTier(data.tier);
@@ -97,10 +114,12 @@ export default function ChatInput({ value, onChange, onSend, onSendText, loading
           marginBottom: 4,
         }}>
           <div style={{
-            padding: "6px 12px", fontSize: 10, fontWeight: 700,
-            color: "#92400e", background: "#fffbf0", borderBottom: "1px solid #fde68a",
+            padding: "8px 14px", fontSize: 12, fontWeight: 700,
+            background: "linear-gradient(90deg, #f0fdf4, #ffffff)",
+            color: "#059669", borderBottom: "1px solid #d1fae5",
+            display: "flex", alignItems: "center", gap: 6
           }}>
-            {suggestTier === "MED" ? "💡 혹시 이 종목인가요?" : "🔍 유사 종목 후보"}
+            {suggestTier === "MED" ? "💡 혹시 이 종목을 찾으시나요?" : "💡 대중적인 추천 우량주"}
           </div>
           {candidates.map((c, i) => (
             <button
