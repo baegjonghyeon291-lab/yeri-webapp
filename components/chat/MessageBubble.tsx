@@ -154,6 +154,8 @@ function parseAnalysisContent(content: string) {
     ['caution', /##\s*⚠️\s*해석\s*주의사항?\s*\n([\s\S]*?)(?=\n##\s|$)/],
     ['verdict', /##\s*💡\s*종합\s*판단\s*\n([\s\S]*?)(?=\n##\s|$)/],
     ['verify', /##\s*🔍\s*검증\s*상태\s*\n([\s\S]*?)(?=\n##\s|$)/],
+    ['buysell', /##\s*🛒\s*매수\/매도\s*참고\s*\n([\s\S]*?)(?=\n##\s|$)/],
+    ['aiOpinion', /##\s*🤖\s*AI\s*참고\s*의견\s*\n([\s\S]*?)(?=\n##\s|$)/],
   ];
   for (const [key, re] of patterns) {
     const m = content.match(re);
@@ -396,6 +398,28 @@ function AnalysisResultCard({ message, onSend, onToggleWatchlist }: {
         <AccordionSection title="🔍 검증 상태">
           <div style={{ fontSize: 12, color: '#6b7280', whiteSpace: 'pre-wrap' }}>{parsed.verify}</div>
         </AccordionSection>
+      )}
+
+      {/* 매수/매도 참고 */}
+      {parsed.buysell && (
+        <AccordionSection title="🛒 매수/매도 참고">
+          <div style={{ fontSize: 12, color: '#374151', whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>{parsed.buysell}</div>
+        </AccordionSection>
+      )}
+
+      {/* AI 참고 의견 */}
+      {parsed.aiOpinion && (
+        <div style={{
+          background: 'linear-gradient(145deg, #f0f9ff 0%, #eff6ff 100%)',
+          borderRadius: 14, padding: '14px 14px',
+          marginBottom: 8, fontSize: 13, color: '#1e40af', lineHeight: 1.7,
+          border: '1px solid rgba(59,130,246,0.12)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+        }}>
+          <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 6, color: '#1e3a5f' }}>🤖 AI 참고 의견</div>
+          <div style={{ whiteSpace: 'pre-wrap' }}>{parsed.aiOpinion.replace(/⚠️.*$/gm, '').trim()}</div>
+          <div style={{ fontSize: 10, color: '#93a3b8', marginTop: 6 }}>⚠️ 자동 생성 참고용이며 투자 권유가 아닙니다.</div>
+        </div>
       )}
 
       {/* ═══ 5. 동종 업계 관심 종목 (pill 형태) ═══ */}
