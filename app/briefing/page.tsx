@@ -153,15 +153,32 @@ export default function BriefingPage() {
   useEffect(() => {
     if (!sessionId) return;
     fetch(`${API}/api/watchlist/${sessionId}`).then((r) => r.json()).then((d) => setWatchlist(d.list || [])).catch(() => {});
-    const saved = localStorage.getItem("yeri_portfolio_items");
-    if (saved) {
+    const savedPort = localStorage.getItem("yeri_portfolio") || localStorage.getItem("yeri_portfolio_items");
+    if (savedPort) {
       try {
-        const items = JSON.parse(saved);
+        const items = JSON.parse(savedPort);
         const tickers = items.map((i: any) => i.ticker).filter(Boolean);
         setPortfolioTickers(tickers);
       } catch (e) {}
     }
+    
+    // 브리핑 캐시 복원
+    const savedBriefing = localStorage.getItem("yeri_briefing");
+    if (savedBriefing) {
+      try {
+        const parsed = JSON.parse(savedBriefing);
+        if (parsed.market) setMarketReport(parsed.market);
+        if (parsed.watchlist) setWatchlistReport(parsed.watchlist);
+      } catch {}
+    }
   }, [sessionId]);
+
+  // 브리핑 캐시 저장
+  useEffect(() => {
+    if (marketReport || watchlistReport) {
+      localStorage.setItem("yeri_briefing", JSON.stringify({ market: marketReport, watchlist: watchlistReport }));
+    }
+  }, [marketReport, watchlistReport]);
 
   async function fetchMarket() {
     setLoading(true);

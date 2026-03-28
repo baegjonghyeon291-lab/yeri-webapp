@@ -49,30 +49,52 @@ export default function ChatClient() {
   const [sessionId, setSessionId] = useState("");
   const [recentTickers, setRecentTickers] = useState<string[]>([]);
   const [portfolioTickers, setPortfolioTickers] = useState<string[]>([]);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "bot",
-      content:
-        "안녕하세요! 저는 예리, AI 투자 비서예요 📈\n\n" +
-        "주식 질문, 종목 분석, 시장 상황 등 궁금한 건 뭐든 물어보세요.\n\n" +
-        "아래 버튼을 눌러 바로 시작할 수도 있어요 👇",
-      time: now(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     setSessionId(getSessionId());
     setRecentTickers(loadRecent());
-    const saved = localStorage.getItem("yeri_portfolio_items");
-    if (saved) {
+    const savedPort = localStorage.getItem("yeri_portfolio") || localStorage.getItem("yeri_portfolio_items");
+    if (savedPort) {
       try {
-        const items = JSON.parse(saved);
+        const items = JSON.parse(savedPort);
         setPortfolioTickers(items.map((i: any) => i.ticker).filter(Boolean));
       } catch (e) {}
     }
+
+    const savedHistory = localStorage.getItem("yeri_chat_history");
+    if (savedHistory) {
+      try {
+        const parsed = JSON.parse(savedHistory);
+        if (parsed.length > 0) {
+          setMessages(parsed);
+          setIsLoaded(true);
+          return;
+        }
+      } catch {}
+    }
+    
+    setMessages([
+      {
+        role: "bot",
+        content:
+          "안녕하세요! 저는 예리, AI 투자 비서예요 📈\n\n" +
+          "주식 질문, 종목 분석, 시장 상황 등 궁금한 건 뭐든 물어보세요.\n\n" +
+          "아래 버튼을 눌러 바로 시작할 수도 있어요 👇",
+        time: now(),
+      },
+    ]);
+    setIsLoaded(true);
   }, []);
+
+  useEffect(() => {
+    if (isLoaded && messages.length > 0) {
+      localStorage.setItem("yeri_chat_history", JSON.stringify(messages.slice(-50)));
+    }
+  }, [messages, isLoaded]);
 
   async function send(text?: string) {
     const msg = (text ?? input).trim();

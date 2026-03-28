@@ -56,11 +56,27 @@ export default function WatchlistPage() {
 
   async function load() {
     try {
-      const res = await fetch(`${API}/api/watchlist/${sessionId}`);
-      const data = await res.json();
-      setList(data.list || []);
-      const s = data.style;
-      setStyle(STYLES.includes(s) ? s : "스윙");
+      const saved = localStorage.getItem("yeri_watchlist");
+      let lsList: any[] = [];
+      if (saved) {
+        try { lsList = JSON.parse(saved); } catch {}
+      }
+      const tickers = lsList.map(item => typeof item === "string" ? item : item.ticker);
+      setList(tickers);
+
+      if (sessionId) {
+        const res = await fetch(`${API}/api/watchlist/${sessionId}`);
+        const data = await res.json();
+        const s = data.style;
+        setStyle(STYLES.includes(s) ? s : "스윙");
+        
+        // 알림 엔진 작동을 위해 백엔드 세션과 로컬 리스트 동기화
+        tickers.forEach(t => {
+          fetch(`${API}/api/watchlist/${sessionId}/add`, {
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticker: t })
+          }).catch(() => {});
+        });
+      }
     } catch { /* API 미연결 시 무시 */ }
   }
 
@@ -74,28 +90,55 @@ export default function WatchlistPage() {
   async function add() {
     if (!input.trim() || loading) return;
     setLoading(true);
+    const ticker = input.trim().toUpperCase();
     try {
-      const res = await fetch(`${API}/api/watchlist/${sessionId}/add`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ticker: input.trim().toUpperCase() }),
-      });
-      const data = await res.json();
-      setList(data.list || []);
+      const saved = localStorage.getItem("yeri_watchlist");
+      const lsList = saved ? JSON.parse(saved) : [];
+      if (!lsList.some((item: any) => (item.ticker || item) === ticker)) {
+        if (lsList.length >= 20) {
+          showToast("⚠️ 최대 개수 초과 (20개)");
+          return;
+        }
+        lsList.push({ ticker, name: ticker, addedAt: Date.now() });
+        localStorage.setItem("yeri_watchlist", JSON.stringify(lsList));
+        setList(lsList.map((i: any) => i.ticker || i));
+        showToast("✅ 추가 완료!");
+        
+        // 백엔드 세션 동기화 (Background)
+        fetch(`${API}/api/watchlist/${sessionId}/add`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ticker }),
+        }).catch(()=>{});
+        
+        // 즉시 스캔
+        fetchAlerts(true);
+      } else {
+        showToast("이미 등록된 종목");
+      }
       setInput("");
-      if (data.result === true) showToast("✅ 추가 완료!");
-      else if (data.result === "limit_reached") showToast("⚠️ 최대 개수 초과");
-      else showToast("이미 등록된 종목");
+    } catch (e) {
+      showToast("추가 실패");
     } finally { setLoading(false); }
   }
 
   async function remove(ticker: string) {
-    await fetch(`${API}/api/watchlist/${sessionId}/remove`, {
+    const saved = localStorage.getItem("yeri_watchlist");
+    if (saved) {
+      try {
+        const lsList = JSON.parse(saved);
+        const filtered = lsList.filter((item: any) => (item.ticker || item) !== ticker);
+        localStorage.setItem("yeri_watchlist", JSON.stringify(filtered));
+        setList(filtered.map((i: any) => i.ticker || i));
+      } catch {}
+    }
+    
+    // 백엔드 세션 동기화
+    fetch(`${API}/api/watchlist/${sessionId}/remove`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ticker }),
-    });
-    load();
+    }).catch(()=>{});
   }
 
   async function changeStyle(s: Style) {

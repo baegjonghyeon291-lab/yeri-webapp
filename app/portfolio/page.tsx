@@ -5,7 +5,7 @@ import { getRiskLevel, getRiskLevelByPnl, getRiskStyle, getRiskClassName } from 
 import LoadingOverlay from "@/components/LoadingOverlay";
 
 const API = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001";
-const STORAGE_KEY = "yeri_portfolio_items";
+const STORAGE_KEY = "yeri_portfolio";
 const REPORT_KEY = "yeri_portfolio_report";
 const STORAGE_VERSION = 1;
 
@@ -81,10 +81,11 @@ export default function PortfolioPage() {
 
   // 데이터 로드
   useEffect(() => {
-    const savedItems = localStorage.getItem(STORAGE_KEY);
-    if (savedItems) {
+    // 하위 버환성 유지
+    const savedPort = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("yeri_portfolio_items");
+    if (savedPort) {
       try {
-        const parsed = JSON.parse(savedItems);
+        const parsed = JSON.parse(savedPort);
         if (Array.isArray(parsed) && parsed.length > 0) setItems(parsed);
       } catch { /* ignore */ }
     }
