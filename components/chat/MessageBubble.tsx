@@ -167,12 +167,14 @@ function parseAnalysisContent(content: string) {
   const timing = content.match(/\*\*⏱️\s*진입\s*타이밍\*\*:\s*(.*)/);
   const outlook = content.match(/\*\*🔭\s*목표\s*관점\*\*:\s*(.*)/);
   const peersMatch = content.match(/\*\*💡\s*동종\s*업계\s*관심\s*종목\*\*:\s*(.*)/);
+  const coreReason = content.match(/\*\*핵심\s*이유\*\*:\s*(.*)/);
 
   if (actionLine) sections['actionLine'] = actionLine[1].trim();
   if (coreAction) sections['coreAction'] = coreAction[1].trim();
   if (timing) sections['timing'] = timing[1].trim();
   if (outlook) sections['outlook'] = outlook[1].trim();
   if (peersMatch) sections['peers'] = peersMatch[1].trim();
+  if (coreReason) sections['coreReason'] = coreReason[1].trim();
 
   return sections;
 }
@@ -186,14 +188,16 @@ function MetricCard({ label, value, source, isRisk, isPositive }: {
   else if (isPositive) valColor = '#059669';
   return (
     <div style={{
-      background: '#fff', borderRadius: 12, padding: '10px 12px',
+      background: '#fff', borderRadius: 12, padding: '12px 14px',
       border: isRisk ? '1px solid #fecaca' : '1px solid rgba(0,0,0,0.05)',
       boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
-      minWidth: 0,
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center'
     }}>
-      <div style={{ fontSize: 10, color: '#9ca3af', fontWeight: 600, marginBottom: 3 }}>{label}</div>
-      <div style={{ fontSize: 16, fontWeight: 800, color: valColor, letterSpacing: '-0.02em' }}>{value}</div>
-      {source && <div style={{ fontSize: 9, color: '#d1d5db', marginTop: 2 }}>{source}</div>}
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div style={{ fontSize: 13, color: '#4b5563', fontWeight: 600 }}>{label}</div>
+        {source && <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 2 }}>{source}</div>}
+      </div>
+      <div style={{ fontSize: 16, fontWeight: 800, color: valColor, letterSpacing: '-0.02em', textAlign: 'right' }}>{value}</div>
     </div>
   );
 }
@@ -274,9 +278,12 @@ function AnalysisResultCard({ message, onSend, onToggleWatchlist }: {
           <VerdictBadge verdict={ad.verdict} />
           <span style={{
             fontSize: 22, fontWeight: 800,
-            color: ad.totalScore >= 60 ? '#059669' : ad.totalScore >= 35 ? '#d97706' : '#dc2626',
+            color: ad.totalScore >= 80 ? '#059669' : ad.totalScore >= 60 ? '#2563eb' : '#dc2626',
           }}>
-            {ad.totalScore}<span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 600 }}>/100</span>
+            {ad.totalScore}<span style={{ fontSize: 14 }}>점</span>
+            <span style={{ fontSize: 13, color: '#6b7280', fontWeight: 600, marginLeft: 6 }}>
+              ({ad.totalScore >= 80 ? '긍정' : ad.totalScore >= 60 ? '보통' : '주의'})
+            </span>
           </span>
         </div>
 
@@ -289,22 +296,25 @@ function AnalysisResultCard({ message, onSend, onToggleWatchlist }: {
         )}
 
         {/* 핵심 정보 그리드 */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 10 }}>
           {parsed.coreAction && (
-            <div style={{ gridColumn: '1 / -1', background: '#f8fafc', borderRadius: 10, padding: '8px 10px', fontSize: 12, color: '#374151' }}>
+            <div style={{ background: '#f8fafc', borderRadius: 10, padding: '10px 12px', fontSize: 13, color: '#1e293b', fontWeight: 600 }}>
               🎯 {parsed.coreAction}
+              {parsed.coreReason && <div style={{ fontSize: 12, color: '#475569', fontWeight: 500, marginTop: 4, lineHeight: 1.5 }}>↳ {parsed.coreReason}</div>}
             </div>
           )}
-          {parsed.timing && (
-            <div style={{ background: '#f8fafc', borderRadius: 10, padding: '8px 10px', fontSize: 12, color: '#374151' }}>
-              ⏱️ {parsed.timing}
-            </div>
-          )}
-          {parsed.outlook && (
-            <div style={{ background: '#f8fafc', borderRadius: 10, padding: '8px 10px', fontSize: 12, color: '#374151' }}>
-              🔭 {parsed.outlook}
-            </div>
-          )}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {parsed.timing && (
+              <div style={{ background: '#f8fafc', borderRadius: 10, padding: '8px 10px', fontSize: 12, color: '#374151' }}>
+                ⏱️ {parsed.timing}
+              </div>
+            )}
+            {parsed.outlook && (
+              <div style={{ background: '#f8fafc', borderRadius: 10, padding: '8px 10px', fontSize: 12, color: '#374151' }}>
+                🔭 {parsed.outlook}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* 핵심 리스크 */}
@@ -330,18 +340,18 @@ function AnalysisResultCard({ message, onSend, onToggleWatchlist }: {
         </div>
       )}
 
-      {/* ═══ 3. 핵심 팩트 지표 그리드 ═══ */}
+      {/* ═══ 3. 핵심 팩트 지표 세로형 카드 리스트 ═══ */}
       <div style={{
-        display: 'grid', gridTemplateColumns: '1fr 1fr',
-        gap: 6, marginBottom: 8,
+        display: 'flex', flexDirection: 'column',
+        gap: 8, marginBottom: 12,
       }}>
-        {m.price && <MetricCard label="현재가" value={`$${Number(m.price.value).toLocaleString()}`} source={m.price.source} />}
+        {m.price && <MetricCard label="현재가" value={`$${Number(m.price.value).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} source={m.price.source} />}
         {m.changePct && <MetricCard label="전일비" value={`${Number(m.changePct.value) > 0 ? '+' : ''}${Number(m.changePct.value).toFixed(2)}%`} source={m.changePct.source} isPositive={isUp} isRisk={isDown} />}
-        {m.per && <MetricCard label="PER" value={Number(m.per.value).toFixed(1)} source={m.per.source} isRisk={Number(m.per.value) > 100 || Number(m.per.value) < 0} />}
+        {m.per && <MetricCard label="PER" value={`${Number(m.per.value).toFixed(1)}배`} source={m.per.source} isRisk={Number(m.per.value) > 100 || Number(m.per.value) < 0} />}
         {m.eps && <MetricCard label="EPS" value={`$${Number(m.eps.value).toFixed(2)}`} source={m.eps.source} />}
         {m.roe && <MetricCard label="ROE" value={`${Number(m.roe.value).toFixed(1)}%`} source={m.roe.source} isPositive={Number(m.roe.value) > 15} />}
-        {m.de && <MetricCard label="D/E" value={Number(m.de.value).toFixed(1)} source={m.de.source} isRisk={Number(m.de.value) > 150} />}
-        {m.fcf && <MetricCard label="FCF" value={formatLargeNum(Number(m.fcf.value))} source={m.fcf.source} isRisk={Number(m.fcf.value) < 0} isPositive={Number(m.fcf.value) > 0} />}
+        {m.de && <MetricCard label="D/E (부채비율)" value={`${Number(m.de.value).toFixed(1)}%`} source={m.de.source} isRisk={Number(m.de.value) > 150} />}
+        {m.fcf && <MetricCard label="FCF (잉여현금흐름)" value={formatLargeNum(Number(m.fcf.value))} source={m.fcf.source} isRisk={Number(m.fcf.value) < 0} isPositive={Number(m.fcf.value) > 0} />}
         {m.rsi && <MetricCard label="RSI(14)" value={Number(m.rsi.value).toFixed(1)} source={m.rsi.source} />}
       </div>
 
@@ -439,8 +449,29 @@ function AnalysisResultCard({ message, onSend, onToggleWatchlist }: {
         </div>
       )}
 
+      {/* ═══ 6. 동적 후속 질문 추천 ═══ */}
+      {onSend && (
+        <div style={{ marginTop: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', marginBottom: 6 }}>💡 이 종목 더 알아보기</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <button
+               onClick={() => onSend(`${message.name || message.ticker}의 가장 큰 하락 리스크는 뭐야?`)}
+               style={{ padding: '8px 12px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, color: '#374151', cursor: 'pointer', textAlign: 'left' }}
+            >📉 가장 큰 하락 리스크 점검하기</button>
+            <button
+               onClick={() => onSend(`${message.name || message.ticker} 상승 모멘텀 요인 자세히 알려줘`)}
+               style={{ padding: '8px 12px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, color: '#374151', cursor: 'pointer', textAlign: 'left' }}
+            >📈 상승 모멘텀 분석 더 보기</button>
+            <button
+               onClick={() => onSend(`${message.name || message.ticker} 유사 기업과 비교 분석해줘`)}
+               style={{ padding: '8px 12px', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, fontSize: 13, color: '#374151', cursor: 'pointer', textAlign: 'left' }}
+            >🆚 경쟁사 및 동종 업계 비교하기</button>
+          </div>
+        </div>
+      )}
+
       {/* 시간 */}
-      <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 4, paddingLeft: 1 }}>
+      <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 8, paddingLeft: 1, textAlign: 'right' }}>
         {message.time}
       </div>
     </div>
@@ -449,10 +480,11 @@ function AnalysisResultCard({ message, onSend, onToggleWatchlist }: {
 
 function formatLargeNum(val: number): string {
   const abs = Math.abs(val);
-  if (abs >= 1e12) return `$${(val / 1e12).toFixed(1)}T`;
-  if (abs >= 1e9) return `$${(val / 1e9).toFixed(1)}B`;
-  if (abs >= 1e6) return `$${(val / 1e6).toFixed(0)}M`;
-  return `$${val.toLocaleString()}`;
+  const sign = val < 0 ? '-' : '';
+  if (abs >= 1e12) return `${sign}$${(abs / 1e12).toFixed(2)}T`;
+  if (abs >= 1e9) return `${sign}$${(abs / 1e9).toFixed(2)}B`;
+  if (abs >= 1e6) return `${sign}$${(abs / 1e6).toFixed(2)}M`;
+  return `${sign}$${abs.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 export default function MessageBubble({ message, showAvatar = true, onSend, onToggleWatchlist }: Props) {
