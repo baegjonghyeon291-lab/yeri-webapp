@@ -25,6 +25,7 @@ export interface AnalysisData {
     newsSentiment: number | null;
   };
   metrics?: Record<string, { value: number; source: string }>;
+  scoreReasons?: Record<string, string>;
   newsClassified?: Array<{ title: string; source: string; type: string; strength: string; trust: string; duration: string }>;
   warnings?: string[];
   peers?: string[] | null;
@@ -120,7 +121,7 @@ function AccordionSection({ title, summary, children, defaultOpen = false }: {
 }
 
 // ── 점수 바 ──
-function ScoreBar({ label, val, color }: { label: string; val: number | null; color: string }) {
+function ScoreBar({ label, val, color, reason }: { label: string; val: number | null; color: string; reason?: string }) {
   if (val == null) return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
       <span style={{ width: 72, fontSize: 11, fontWeight: 600, color: '#6b7280' }}>{label}</span>
@@ -128,12 +129,15 @@ function ScoreBar({ label, val, color }: { label: string; val: number | null; co
     </div>
   );
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-      <span style={{ width: 72, fontSize: 11, fontWeight: 600, color: '#6b7280' }}>{label}</span>
-      <div style={{ flex: 1, height: 5, background: '#e5e7eb', borderRadius: 3, overflow: 'hidden' }}>
-        <div style={{ width: `${val}%`, height: '100%', background: color, borderRadius: 3, transition: 'width 0.8s ease-out' }} />
+    <div style={{ marginBottom: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ width: 72, fontSize: 11, fontWeight: 600, color: '#6b7280' }}>{label}</span>
+        <div style={{ flex: 1, height: 5, background: '#e5e7eb', borderRadius: 3, overflow: 'hidden' }}>
+          <div style={{ width: `${val}%`, height: '100%', background: color, borderRadius: 3, transition: 'width 0.8s ease-out' }} />
+        </div>
+        <span style={{ width: 24, textAlign: 'right', fontSize: 11, fontWeight: 700, color }}>{val}</span>
       </div>
-      <span style={{ width: 24, textAlign: 'right', fontSize: 11, fontWeight: 700, color }}>{val}</span>
+      {reason && <div style={{ fontSize: 10, color: '#9ca3af', marginLeft: 80, marginTop: 2 }}>{reason}</div>}
     </div>
   );
 }
@@ -371,12 +375,12 @@ function AnalysisResultCard({ message, onSend, onToggleWatchlist }: {
 
       {/* 6대 부문 점수 */}
       <AccordionSection title="💯 6대 부문 점수" summary={`(종합: ${ad.totalScore})`}>
-        <ScoreBar label="🚀 성장성" val={ad.scores.growth} color="#3b82f6" />
-        <ScoreBar label="💰 수익성" val={ad.scores.profitability} color="#10b981" />
-        <ScoreBar label="🛡️ 재무안정" val={ad.scores.stability} color="#06b6d4" />
-        <ScoreBar label="📊 밸류에이션" val={ad.scores.valuation} color="#f59e0b" />
-        <ScoreBar label="🏄 모멘텀" val={ad.scores.momentum} color="#8b5cf6" />
-        <ScoreBar label="📰 뉴스심리" val={ad.scores.newsSentiment} color="#ec4899" />
+        <ScoreBar label="🚀 성장성" val={ad.scores.growth} color="#3b82f6" reason={ad.scoreReasons?.growth} />
+        <ScoreBar label="💰 수익성" val={ad.scores.profitability} color="#10b981" reason={ad.scoreReasons?.profitability} />
+        <ScoreBar label="🛡️ 재무안정" val={ad.scores.stability} color="#06b6d4" reason={ad.scoreReasons?.stability} />
+        <ScoreBar label="📊 밸류에이션" val={ad.scores.valuation} color="#f59e0b" reason={ad.scoreReasons?.valuation} />
+        <ScoreBar label="🏄 모멘텀" val={ad.scores.momentum} color="#8b5cf6" reason={ad.scoreReasons?.momentum} />
+        <ScoreBar label="📰 뉴스심리" val={ad.scores.newsSentiment} color="#ec4899" reason={ad.scoreReasons?.newsSentiment} />
       </AccordionSection>
 
       {/* 해석 주의 */}
