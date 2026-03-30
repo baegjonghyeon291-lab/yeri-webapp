@@ -1,9 +1,10 @@
 // 채팅 레이아웃 — 카카오톡형 고정 레이아웃 (모바일 완전 대응)
 // 전략: position:fixed + dvh로 height 체인 문제를 완전히 우회
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import MessageBubble, { DateDivider, type Message } from "./MessageBubble";
 import ChatInput from "./ChatInput";
+import HomeDashboard from "./HomeDashboard";
 
 interface Props {
   messages: Message[];
@@ -27,10 +28,22 @@ export default function ChatLayout({
 }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [apiVersion, setApiVersion] = useState<string>("...");
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
+
+  useEffect(() => {
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://yeri-project.onrender.com";
+    fetch(`${baseUrl}/api/version`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.commitHash) setApiVersion(data.commitHash.substring(0, 7));
+        else setApiVersion("unknown");
+      })
+      .catch(() => setApiVersion("error"));
+  }, []);
 
   return (
     /*
@@ -40,7 +53,8 @@ export default function ChatLayout({
     */
     <div style={{
       position: "fixed",
-      inset: 0,
+      top: 0, left: 0, right: 0,
+      height: "100dvh",
       display: "flex",
       flexDirection: "column",
       background: "var(--bg-chat)",
@@ -113,8 +127,8 @@ export default function ChatLayout({
               boxShadow: "0 0 5px rgba(63,202,107,0.7)",
             }} />
             <span style={{ fontSize: 10, color: "#3fca6b", fontWeight: 500 }}>분석 가능</span>
-            <span style={{ fontSize: 9, color: "var(--text-muted)", marginLeft: 2, fontWeight: 500 }}>
-              v:{process.env.NEXT_PUBLIC_BUILD_HASH || "dev"}
+            <span style={{ fontSize: 9, color: "var(--text-muted)", marginLeft: 2, fontWeight: 500 }} title={`Frontend: ${process.env.NEXT_PUBLIC_BUILD_HASH || "dev"}`}>
+              v:{apiVersion}
             </span>
           </div>
         </div>
@@ -183,19 +197,28 @@ export default function ChatLayout({
           overscrollBehavior: "contain",
         }}
       >
-        {messages.map((m, i) => {
-          const prevM = messages[i - 1];
-          const isConsecutiveBot = m.role === "bot" && prevM?.role === "bot";
-          const showAvatar = !isConsecutiveBot;
-          const showDateDivider = m.date && (!prevM?.date || prevM.date !== m.date);
+        {messages.length <= 1 && messages[0]?.role === "bot" ? (
+           <>
+             {messages[0] && <MessageBubble message={messages[0]} showAvatar={true} onSend={onSend} />}
+             <div style={{ marginTop: 10 }}>
+               <HomeDashboard onAnalyze={onSend} recentTickers={recentTickers} />
+             </div>
+           </>
+        ) : (
+          messages.map((m, i) => {
+            const prevM = messages[i - 1];
+            const isConsecutiveBot = m.role === "bot" && prevM?.role === "bot";
+            const showAvatar = !isConsecutiveBot;
+            const showDateDivider = m.date && (!prevM?.date || prevM.date !== m.date);
 
-          return (
-            <div key={i}>
-              {showDateDivider && m.date && <DateDivider label={formatDateLabel(m.date)} />}
-              <MessageBubble message={m} showAvatar={showAvatar} onSend={onSend} />
-            </div>
-          );
-        })}
+            return (
+              <div key={i}>
+                {showDateDivider && m.date && <DateDivider label={formatDateLabel(m.date)} />}
+                <MessageBubble message={m} showAvatar={showAvatar} onSend={onSend} />
+              </div>
+            );
+          })
+        )}
 
         {/* 로딩 말풍선 */}
         {loading && (

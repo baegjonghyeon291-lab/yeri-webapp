@@ -3,6 +3,8 @@ import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import InstallPrompt from "@/components/InstallPrompt";
 
+import AlertManager from "@/components/AlertManager";
+
 export const metadata: Metadata = {
   title: "JH♡YR",
   description: "AI 투자 어시스턴트 — 예리",
@@ -51,6 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         display: 'flex', height: '100dvh', overflow: 'hidden',
         background: 'var(--bg-primary)',
       }}>
+        <AlertManager />
         <Sidebar />
         <main className="flex-1 overflow-hidden" style={{ minWidth: 0, display: 'flex', flexDirection: 'column', height: '100%' }}>
           {children}
