@@ -12,9 +12,25 @@ import { useEffect, useState } from "react";
  */
 export default function UpdatePrompt() {
   const [showBanner, setShowBanner] = useState(false);
+  const [showUpdateToast, setShowUpdateToast] = useState(false);
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
+    const currentBuild = process.env.NEXT_PUBLIC_BUILD_HASH || "dev";
+
+    // ── 0. 방금 업데이트가 완료되어 새로 켜진 경우 감지 ──
+    if (currentBuild !== "dev") {
+      const lastVersion = localStorage.getItem("appVersion");
+      // 처음 접속이 아니면서(lastVersion 존재), 이전 버전에서 새 버전으로 바뀐 경우
+      if (lastVersion && lastVersion !== currentBuild) {
+        setShowUpdateToast(true);
+        // 5초간 띄운 뒤 자동 숨김
+        setTimeout(() => setShowUpdateToast(false), 6000);
+      }
+      // 최신 버전 업데이트 기록
+      localStorage.setItem("appVersion", currentBuild);
+    }
+
     // ── 1. Service Worker 업데이트 감지 ──
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.ready.then((reg) => {
@@ -44,7 +60,6 @@ export default function UpdatePrompt() {
     }
 
     // ── 2. version.json 폴링으로 배포 감지 ──
-    const currentBuild = process.env.NEXT_PUBLIC_BUILD_HASH || "dev";
     if (currentBuild === "dev") return; // 개발 모드에서는 비활성화
 
     async function checkVersion() {
@@ -53,7 +68,7 @@ export default function UpdatePrompt() {
         const data = await res.json();
         if (data.version && data.version !== "__BUILD_VERSION__" && !data.version.includes(currentBuild)) {
           setShowBanner(true);
-          // 5초 후 자동 새로고침
+          // 3초 후 자동 새로고침
           setTimeout(() => {
             setUpdating(true);
             // 캐시 전부 날리고 새로고침
@@ -83,42 +98,83 @@ export default function UpdatePrompt() {
     };
   }, [updating]);
 
-  if (!showBanner) return null;
-
   return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 99999,
-        background: "linear-gradient(135deg, #2ea85a 0%, #1a8a45 100%)",
-        color: "#fff",
-        padding: "14px 20px",
-        paddingTop: "calc(14px + env(safe-area-inset-top, 0px))",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 10,
-        fontSize: 13,
-        fontWeight: 600,
-        boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-        animation: "slideDown 0.3s ease",
-      }}
-    >
-      <span style={{ animation: "spin 1s linear infinite", fontSize: 16 }}>🔄</span>
-      <span>새 버전이 감지되었습니다. 자동으로 업데이트 중...</span>
-      <style>{`
-        @keyframes slideDown {
-          from { transform: translateY(-100%); }
-          to { transform: translateY(0); }
-        }
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
-    </div>
+    <>
+      {/* 1) 새로고침 직후 "업데이트 완료" 알림 토스트 (애니메이션 포함 하단 고정) */}
+      {showUpdateToast && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: "80px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 999999,
+            background: "rgba(25, 25, 25, 0.95)",
+            color: "#fff",
+            padding: "16px 24px",
+            borderRadius: "50px",
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            fontSize: 15,
+            fontWeight: 600,
+            boxShadow: "0 8px 30px rgba(0,0,0,0.3)",
+            animation: "toastPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, fadeOut 1s ease 5s forwards",
+            whiteSpace: "nowrap"
+          }}
+        >
+          <span style={{ fontSize: 20 }}>✨</span>
+          <span>업데이트 됐습니다 귀염둥이 예리</span>
+          <style>{`
+            @keyframes toastPop {
+              from { opacity: 0; bottom: 50px; transform: translateX(-50%) scale(0.9); }
+              to { opacity: 1; bottom: 80px; transform: translateX(-50%) scale(1); }
+            }
+            @keyframes fadeOut {
+              from { opacity: 1; }
+              to { opacity: 0; pointer-events: none; }
+            }
+          `}</style>
+        </div>
+      )}
+
+      {/* 2) 강제 새로고침 감지 전 띄우는 배너 (기존) */}
+      {showBanner && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 99999,
+            background: "linear-gradient(135deg, #2ea85a 0%, #1a8a45 100%)",
+            color: "#fff",
+            padding: "14px 20px",
+            paddingTop: "calc(14px + env(safe-area-inset-top, 0px))",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 10,
+            fontSize: 13,
+            fontWeight: 600,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+            animation: "slideDown 0.3s ease",
+          }}
+        >
+          <span style={{ animation: "spin 1s linear infinite", fontSize: 16 }}>🔄</span>
+          <span>새 버전 감지됨. 업데이트 중...</span>
+          <style>{`
+            @keyframes slideDown {
+              from { transform: translateY(-100%); }
+              to { transform: translateY(0); }
+            }
+            @keyframes spin {
+              from { transform: rotate(0deg); }
+              to { transform: rotate(360deg); }
+            }
+          `}</style>
+        </div>
+      )}
+    </>
   );
 }
