@@ -129,7 +129,7 @@ export default function UpdatePrompt() {
             <span className="p3">✨</span>
           </div>
           <span style={{ fontSize: 22 }}>✨</span>
-          <span>업데이트 됐습니다 귀염둥이 예리 💕</span>
+          <span>귀염둥이 예리야 업데이트 됐어!! 💕</span>
           <style>{`
             @keyframes toastPop {
               from { opacity: 0; bottom: 40px; transform: translateX(-50%) scale(0.8); }
