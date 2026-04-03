@@ -109,30 +109,61 @@ export default function UpdatePrompt() {
             left: "50%",
             transform: "translateX(-50%)",
             zIndex: 999999,
-            background: "rgba(25, 25, 25, 0.95)",
+            background: "linear-gradient(135deg, rgba(255, 105, 180, 0.95), rgba(255, 20, 147, 0.95))",
             color: "#fff",
-            padding: "16px 24px",
+            padding: "16px 28px",
             borderRadius: "50px",
             display: "flex",
             alignItems: "center",
             gap: 12,
-            fontSize: 15,
-            fontWeight: 600,
-            boxShadow: "0 8px 30px rgba(0,0,0,0.3)",
-            animation: "toastPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, fadeOut 1s ease 5s forwards",
+            fontSize: 16,
+            fontWeight: 700,
+            boxShadow: "0 10px 40px rgba(255, 20, 147, 0.4)",
+            animation: "toastPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, fadeOut 1s ease 5s forwards",
             whiteSpace: "nowrap"
           }}
         >
-          <span style={{ fontSize: 20 }}>✨</span>
-          <span>업데이트 됐습니다 귀염둥이 예리</span>
+          <div className="heart-particles">
+            <span className="p1">💕</span>
+            <span className="p2">💖</span>
+            <span className="p3">✨</span>
+          </div>
+          <span style={{ fontSize: 22 }}>✨</span>
+          <span>업데이트 됐습니다 귀염둥이 예리 💕</span>
           <style>{`
             @keyframes toastPop {
-              from { opacity: 0; bottom: 50px; transform: translateX(-50%) scale(0.9); }
+              from { opacity: 0; bottom: 40px; transform: translateX(-50%) scale(0.8); }
               to { opacity: 1; bottom: 80px; transform: translateX(-50%) scale(1); }
             }
             @keyframes fadeOut {
               from { opacity: 1; }
               to { opacity: 0; pointer-events: none; }
+            }
+            .heart-particles span {
+              position: absolute;
+              font-size: 20px;
+              opacity: 0;
+              pointer-events: none;
+            }
+            .heart-particles .p1 {
+              left: 10%;
+              animation: floatUp 1.5s ease-out infinite;
+              animation-delay: 0.2s;
+            }
+            .heart-particles .p2 {
+              left: 50%;
+              animation: floatUp 1.8s ease-out infinite;
+              animation-delay: 0.5s;
+            }
+            .heart-particles .p3 {
+              right: 10%;
+              animation: floatUp 1.6s ease-out infinite;
+              animation-delay: 0.1s;
+            }
+            @keyframes floatUp {
+              0% { transform: translateY(0) scale(0.5) rotate(0deg); opacity: 0; }
+              50% { opacity: 0.8; transform: scale(1.2) rotate(15deg); }
+              100% { transform: translateY(-30px) scale(0.8) rotate(-10deg); opacity: 0; }
             }
           `}</style>
         </div>
