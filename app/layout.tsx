@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import InstallPrompt from "@/components/InstallPrompt";
+import UpdatePrompt from "@/components/UpdatePrompt";
 
 import AlertManager from "@/components/AlertManager";
 
@@ -38,12 +39,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="JH♡YR" />
         <meta name="theme-color" content="#2ea85a" />
-        {/* Service Worker 등록 */}
+        {/* Service Worker 등록 — 매번 서버에서 sw.js 새로 체크 */}
         <script dangerouslySetInnerHTML={{ __html: `
           if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
-              navigator.serviceWorker.register('/sw.js')
-                .then(function(reg) { console.log('[SW] 등록:', reg.scope); })
+              navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+                .then(function(reg) {
+                  console.log('[SW] 등록:', reg.scope);
+                  // 즉시 업데이트 체크
+                  reg.update();
+                })
                 .catch(function(e) { console.log('[SW] 실패:', e); });
             });
           }
@@ -54,6 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         background: 'var(--bg-primary)',
       }}>
         <AlertManager />
+        <UpdatePrompt />
         <Sidebar />
         <main className="flex-1 overflow-hidden" style={{ minWidth: 0, display: 'flex', flexDirection: 'column', height: '100%' }}>
           {children}
