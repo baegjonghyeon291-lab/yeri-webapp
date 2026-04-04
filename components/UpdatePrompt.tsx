@@ -16,28 +16,34 @@ export default function UpdatePrompt() {
 
   useEffect(() => {
     const currentBuild = process.env.NEXT_PUBLIC_BUILD_HASH || "dev";
+    if (currentBuild === "dev") return;
 
-    // ── 업데이트 완료 후 재시작 감지 (성공 토스트) ──
-    if (currentBuild !== "dev") {
-      const lastVersion = localStorage.getItem("appVersion");
+    const justUpdated = localStorage.getItem("yeri-just-updated");
+    const lastVersion = localStorage.getItem("appVersion");
 
-      if (!lastVersion) {
-        // ★ 첫 설치 또는 재설치 → 1회 업데이트 확인 화면 표시
-        setNeedsUpdate(true);
-        window.dispatchEvent(new CustomEvent("yeri-version-status", { detail: "outdated" }));
-        return; // 폴링 불필요 (어차피 블로커 뜸)
-      }
-
-      if (lastVersion !== currentBuild) {
-        // 이전 버전에서 새 버전으로 바뀐 경우 → 성공 토스트
-        setShowSuccessToast(true);
-        setTimeout(() => setShowSuccessToast(false), 6000);
-        localStorage.setItem("appVersion", currentBuild);
-      }
+    // ── Case 1: 방금 업데이트 완료 후 리로드 → 성공 토스트 + 버전 기록 ──
+    if (justUpdated === "true") {
+      localStorage.removeItem("yeri-just-updated");
+      localStorage.setItem("appVersion", currentBuild);
+      setShowSuccessToast(true);
+      setTimeout(() => setShowSuccessToast(false), 6000);
+      window.dispatchEvent(new CustomEvent("yeri-version-status", { detail: "latest" }));
+      return; // 더 이상 체크 불필요
     }
 
-    // ── version.json 폴링 (버전 비교만, 자동 동작 없음) ──
-    if (currentBuild === "dev") return;
+    // ── Case 2: appVersion이 없음 → 첫 설치 또는 재설치 → 무조건 블로커 1회 ──
+    if (!lastVersion) {
+      setNeedsUpdate(true);
+      window.dispatchEvent(new CustomEvent("yeri-version-status", { detail: "outdated" }));
+      return; // 폴링 불필요 (블로커 뜸)
+    }
+
+    // ── Case 3: appVersion 있고 현재 빌드와 같음 → 최신 (기존 사용자) ──
+    if (lastVersion === currentBuild) {
+      window.dispatchEvent(new CustomEvent("yeri-version-status", { detail: "latest" }));
+    }
+
+    // ── Case 4: appVersion 있지만 다름 → 새 버전 배포됨 → 폴링으로 확인 ──
 
     async function checkVersion() {
       try {
