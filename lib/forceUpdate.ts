@@ -33,8 +33,9 @@ export async function forceUpdate(): Promise<void> {
   // 3. 버전 관련 storage 정리
   try {
     localStorage.removeItem("appVersion");
+    localStorage.removeItem("pwa-initialized");
     localStorage.removeItem("sw-version");
-    // ★ "방금 업데이트 완료" 플래그 → 리로드 후 첫설치 블로커 대신 성공 토스트 표시
+    // ★ "방금 업데이트 완료" 플래그 → 리로드 후 성공 토스트 표시
     localStorage.setItem("yeri-just-updated", "true");
     sessionStorage.clear();
   } catch (e) {

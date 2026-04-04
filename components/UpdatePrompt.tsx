@@ -19,28 +19,44 @@ export default function UpdatePrompt() {
     if (currentBuild === "dev") return;
 
     const justUpdated = localStorage.getItem("yeri-just-updated");
-    const lastVersion = localStorage.getItem("appVersion");
 
-    // ── Case 1: 방금 업데이트 완료 후 리로드 → 성공 토스트 + 버전 기록 ──
+    // ── Case 1: 방금 업데이트 완료 후 리로드 → 성공 토스트 ──
     if (justUpdated === "true") {
       localStorage.removeItem("yeri-just-updated");
       localStorage.setItem("appVersion", currentBuild);
+      localStorage.setItem("pwa-initialized", currentBuild);
       setShowSuccessToast(true);
       setTimeout(() => setShowSuccessToast(false), 6000);
       window.dispatchEvent(new CustomEvent("yeri-version-status", { detail: "latest" }));
-      return; // 더 이상 체크 불필요
+      return;
     }
 
-    // ── Case 2: appVersion이 없음 → 첫 설치 또는 재설치 → 무조건 블로커 1회 ──
-    if (!lastVersion) {
-      setNeedsUpdate(true);
-      window.dispatchEvent(new CustomEvent("yeri-version-status", { detail: "outdated" }));
-      return; // 폴링 불필요 (블로커 뜸)
-    }
+    // ── PWA(홈화면 앱) 모드 감지 ──
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches
+      || (navigator as any).standalone === true;
 
-    // ── Case 3: appVersion 있고 현재 빌드와 같음 → 최신 (기존 사용자) ──
-    if (lastVersion === currentBuild) {
+    if (isStandalone) {
+      // PWA 모드: pwa-initialized 키로 첫 실행 감지 (browser localStorage와 분리)
+      const pwaInit = localStorage.getItem("pwa-initialized");
+      if (!pwaInit || pwaInit !== currentBuild) {
+        // ★ PWA 첫 실행 또는 새 버전 → 무조건 블로커
+        setNeedsUpdate(true);
+        window.dispatchEvent(new CustomEvent("yeri-version-status", { detail: "outdated" }));
+        return;
+      }
+      // pwa-initialized가 현재 빌드와 같으면 → 최신
       window.dispatchEvent(new CustomEvent("yeri-version-status", { detail: "latest" }));
+    } else {
+      // 브라우저 모드: appVersion으로 감지
+      const lastVersion = localStorage.getItem("appVersion");
+      if (!lastVersion) {
+        setNeedsUpdate(true);
+        window.dispatchEvent(new CustomEvent("yeri-version-status", { detail: "outdated" }));
+        return;
+      }
+      if (lastVersion === currentBuild) {
+        window.dispatchEvent(new CustomEvent("yeri-version-status", { detail: "latest" }));
+      }
     }
 
     // ── Case 4: appVersion 있지만 다름 → 새 버전 배포됨 → 폴링으로 확인 ──
