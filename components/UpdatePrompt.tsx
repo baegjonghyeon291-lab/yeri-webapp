@@ -4,9 +4,10 @@ import { forceUpdate } from "@/lib/forceUpdate";
 
 /**
  * PWA 수동 업데이트 컴포넌트.
- * - 자동 새로고침 없음 (수동 버튼 클릭만)
- * - 구버전 감지 → 풀스크린 블로커 + "업데이트 하기" 버튼
- * - 버튼 클릭 → 하트 로딩 화면 → SW/캐시 삭제 → 하드 리로드
+ * - 자동 새로고침/SW교체/캐시삭제 일절 없음
+ * - 구버전 감지 → "업데이트 하기" 버튼 표시
+ * - 버튼 클릭 시에만 SW/캐시 퍼지 + 하드 리로드
+ * - 최신 상태면 아무것도 안 뜸
  */
 export default function UpdatePrompt() {
   const [needsUpdate, setNeedsUpdate] = useState(false);
@@ -16,7 +17,7 @@ export default function UpdatePrompt() {
   useEffect(() => {
     const currentBuild = process.env.NEXT_PUBLIC_BUILD_HASH || "dev";
 
-    // ── 업데이트 완료 후 재시작 감지 ──
+    // ── 업데이트 완료 후 재시작 감지 (성공 토스트) ──
     if (currentBuild !== "dev") {
       const lastVersion = localStorage.getItem("appVersion");
       if (lastVersion && lastVersion !== currentBuild) {
@@ -26,12 +27,7 @@ export default function UpdatePrompt() {
       localStorage.setItem("appVersion", currentBuild);
     }
 
-    // ── SW 즉시 재등록 (구버전 SW 교체 유도) ──
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).catch(() => {});
-    }
-
-    // ── version.json 폴링 ──
+    // ── version.json 폴링 (버전 비교만, 자동 동작 없음) ──
     if (currentBuild === "dev") return;
 
     async function checkVersion() {
@@ -62,11 +58,10 @@ export default function UpdatePrompt() {
     return () => { clearInterval(t); document.removeEventListener("visibilitychange", onVisible); };
   }, []);
 
-  // 수동 업데이트 버튼 클릭
+  // 수동 업데이트 버튼 클릭 시에만 실행
   const handleUpdate = async () => {
     setUpdating(true);
     window.dispatchEvent(new CustomEvent("yeri-version-status", { detail: "updating" }));
-    // 로딩 화면을 2초 보여준 뒤 실제 퍼지 + 리로드
     await new Promise(r => setTimeout(r, 2000));
     await forceUpdate();
   };
@@ -94,7 +89,7 @@ export default function UpdatePrompt() {
         </div>
       )}
 
-      {/* ── 업데이트 하기 블로커 (구버전 감지 시) ── */}
+      {/* ── 구버전 감지 → 업데이트 하기 블로커 ── */}
       {needsUpdate && !updating && (
         <div style={{
           position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999999,
@@ -134,7 +129,7 @@ export default function UpdatePrompt() {
         </div>
       )}
 
-      {/* ── 업데이트 진행 중 로딩 화면 ── */}
+      {/* ── 업데이트 진행 중 로딩 화면 (버튼 클릭 시에만) ── */}
       {updating && (
         <div style={{
           position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999999,
@@ -142,42 +137,28 @@ export default function UpdatePrompt() {
           display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
           animation: "fadeIn .3s ease forwards",
         }}>
-          {/* 하트 파티클 배경 */}
+          {/* 하트 파티클 */}
           <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
             {["💕","💖","✨","💗","♡","💫","💕","✨","💖","♡","💗","💫"].map((h, i) => (
               <span key={i} style={{
-                position: "absolute",
-                left: `${8 + (i * 7.5) % 84}%`,
-                fontSize: 16 + (i % 3) * 8,
-                opacity: 0,
+                position: "absolute", left: `${8 + (i * 7.5) % 84}%`,
+                fontSize: 16 + (i % 3) * 8, opacity: 0,
                 animation: `heartFloat ${3 + (i % 3)}s ease-in-out ${i * 0.3}s infinite`,
               }}>{h}</span>
             ))}
           </div>
 
-          {/* 로딩 스피너 */}
+          {/* 스피너 */}
           <div style={{
             width: 80, height: 80, borderRadius: "50%",
-            border: "4px solid rgba(255,255,255,.15)",
-            borderTopColor: "#ff69b4",
-            animation: "spin 1s linear infinite",
-            marginBottom: 32,
+            border: "4px solid rgba(255,255,255,.15)", borderTopColor: "#ff69b4",
+            animation: "spin 1s linear infinite", marginBottom: 32,
           }} />
 
-          {/* 메인 문구 */}
-          <h2 style={{
-            color: "#fff", fontSize: 24, fontWeight: 800,
-            marginBottom: 16, letterSpacing: "-.3px",
-            animation: "pulse 2s ease-in-out infinite",
-          }}>
+          <h2 style={{ color: "#fff", fontSize: 24, fontWeight: 800, marginBottom: 16, animation: "pulse 2s ease-in-out infinite" }}>
             새 버전 적용중...
           </h2>
-
-          {/* 서브 문구 */}
-          <p style={{
-            color: "#ff69b4", fontSize: 16, fontWeight: 700,
-            letterSpacing: 1,
-          }}>
+          <p style={{ color: "#ff69b4", fontSize: 16, fontWeight: 700, letterSpacing: 1 }}>
             ♡♡ 좀만 기다려 귀요미 ♡♡
           </p>
 
@@ -185,10 +166,10 @@ export default function UpdatePrompt() {
             @keyframes spin { to{transform:rotate(360deg)} }
             @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.7} }
             @keyframes heartFloat {
-              0% { transform:translateY(100vh) rotate(0deg); opacity:0; }
-              10% { opacity:.6; }
-              90% { opacity:.6; }
-              100% { transform:translateY(-20vh) rotate(360deg); opacity:0; }
+              0% { transform:translateY(100vh) rotate(0deg); opacity:0 }
+              10% { opacity:.6 }
+              90% { opacity:.6 }
+              100% { transform:translateY(-20vh) rotate(360deg); opacity:0 }
             }
           `}</style>
         </div>
