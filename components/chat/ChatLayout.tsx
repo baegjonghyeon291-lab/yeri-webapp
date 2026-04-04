@@ -29,6 +29,7 @@ export default function ChatLayout({
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [apiVersion, setApiVersion] = useState<string>("...");
+  const [versionStatus, setVersionStatus] = useState<"checking" | "latest" | "outdated" | "updating">("checking");
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -44,6 +45,25 @@ export default function ChatLayout({
       })
       .catch(() => setApiVersion("error"));
   }, []);
+
+  // 버전 상태 이벤트 수신
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as string;
+      if (detail === "latest" || detail === "outdated" || detail === "updating") {
+        setVersionStatus(detail);
+      }
+    };
+    window.addEventListener("yeri-version-status", handler);
+    return () => window.removeEventListener("yeri-version-status", handler);
+  }, []);
+
+  const statusConfig = {
+    checking: { text: "확인 중...", color: "#999", bg: "#f5f5f5", border: "#e0e0e0" },
+    latest:   { text: "✅ 최신 버전", color: "#2ea85a", bg: "#edf9f0", border: "#c8efd8" },
+    outdated: { text: "⚠️ 업데이트 필요", color: "#e65100", bg: "#fff3e0", border: "#ffcc80" },
+    updating: { text: "⏳ 업데이트 중", color: "#1565c0", bg: "#e3f2fd", border: "#90caf9" },
+  }[versionStatus];
 
   return (
     /*
@@ -120,16 +140,31 @@ export default function ChatLayout({
         {/* 가운데: 봇 상태 정보 */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 700, fontSize: 13, color: "#1a2233", letterSpacing: "-0.02em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 1 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 1, flexWrap: "wrap" }}>
             <div style={{
               width: 6, height: 6, borderRadius: "50%",
               background: "#3fca6b",
               boxShadow: "0 0 5px rgba(63,202,107,0.7)",
             }} />
             <span style={{ fontSize: 10, color: "#3fca6b", fontWeight: 500 }}>분석 가능</span>
-            <span style={{ fontSize: 9, color: "var(--text-muted)", marginLeft: 2, fontWeight: 500 }} title={`Frontend: ${process.env.NEXT_PUBLIC_BUILD_HASH || "dev"}`}>
-              v:{apiVersion}
+            {/* 버전 상태 배지 */}
+            <span style={{ 
+              fontSize: 9, 
+              color: statusConfig.color, 
+              marginLeft: 4, 
+              fontWeight: 600,
+              background: statusConfig.bg,
+              padding: "2px 7px",
+              borderRadius: "4px",
+              border: `1px solid ${statusConfig.border}`,
+              whiteSpace: "nowrap",
+            }}>
+              {statusConfig.text}
             </span>
+          </div>
+          {/* 상세 해시 (작은 글씨) */}
+          <div style={{ fontSize: 8, color: "#bbb", marginTop: 2 }}>
+            앱 {process.env.NEXT_PUBLIC_BUILD_HASH || "dev"} · 서버 {apiVersion}
           </div>
         </div>
 

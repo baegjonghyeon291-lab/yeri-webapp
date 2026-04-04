@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { getSessionId } from "@/lib/session";
+import { forceUpdate } from "@/lib/forceUpdate";
 
 const API = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001";
 
@@ -178,6 +179,25 @@ export default function Sidebar() {
           >
             <span style={{ fontSize: 20, lineHeight: 1, flexShrink: 0 }}>💌</span>
             <span style={{ flex: 1 }}>개발자의 한마디</span>
+          </button>
+          {/* 강제 업데이트 비상 버튼 (데스크톱) */}
+          <button
+            onClick={() => forceUpdate()}
+            style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "12px 16px", borderRadius: 12, marginBottom: 4, marginTop: 8,
+              background: "transparent", color: "#e65100",
+              fontWeight: 500, fontSize: 13, cursor: "pointer",
+              userSelect: "none", WebkitTapHighlightColor: "transparent",
+              transition: "background 0.15s, color 0.15s",
+              minHeight: 44, borderLeft: "3px solid transparent", paddingLeft: 16,
+              border: "1px dashed #ffcc80", width: "100%", textAlign: "left",
+            }}
+            onMouseOver={e => { e.currentTarget.style.background = "#fff3e0"; }}
+            onMouseOut={e => { e.currentTarget.style.background = "transparent"; }}
+          >
+            <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>🔄</span>
+            <span style={{ flex: 1 }}>강제 업데이트</span>
           </button>
         </nav>
         <div style={{ padding: "0 16px", fontSize: 10, color: "var(--text-muted)" }}>GPT-4.1 · o3 분석 · build:{process.env.NEXT_PUBLIC_BUILD_HASH || "dev"}</div>
@@ -359,6 +379,23 @@ export default function Sidebar() {
           >
             <span style={{ fontSize: 20, lineHeight: 1, flexShrink: 0 }}>💌</span>
             <span style={{ flex: 1 }}>개발자의 한마디</span>
+          </button>
+          {/* 강제 업데이트 비상 버튼 (모바일 드로어) */}
+          <button
+            onClick={() => { setOpen(false); setTimeout(() => forceUpdate(), 300); }}
+            style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "12px 16px", borderRadius: 12, marginBottom: 4, marginTop: 8,
+              background: "transparent", color: "#e65100",
+              fontWeight: 500, fontSize: 13, cursor: "pointer",
+              userSelect: "none", WebkitTapHighlightColor: "transparent",
+              transition: "background 0.15s",
+              minHeight: 44, borderLeft: "3px solid transparent", paddingLeft: 16,
+              border: "1px dashed #ffcc80", width: "100%", textAlign: "left",
+            }}
+          >
+            <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>🔄</span>
+            <span style={{ flex: 1 }}>강제 업데이트</span>
           </button>
         </nav>
 
