@@ -82,7 +82,7 @@ export default function InstallPrompt() {
         top: 0, left: 0, right: 0,
         zIndex: 99998,
         paddingTop: "env(safe-area-inset-top, 0px)",
-        background: "linear-gradient(135deg, #1a3a2a 0%, #2d5a3f 100%)",
+        background: "linear-gradient(135deg, #3d1f2e 0%, #5c3048 100%)",
         boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
         animation: "slideDown .3s ease",
       }}>
@@ -108,10 +108,10 @@ export default function InstallPrompt() {
             onClick={handleInstall}
             style={{
               padding: "10px 20px",
-              background: "linear-gradient(135deg, #3fca6b, #2ea85a)",
+              background: "linear-gradient(135deg, #e8a0bf, #d48aaa)",
               color: "#fff", border: "none", borderRadius: 12,
               fontSize: 13, fontWeight: 700, cursor: "pointer",
-              boxShadow: "0 4px 12px rgba(63,202,107,.3)",
+              boxShadow: "0 4px 12px rgba(232,160,191,.3)",
               whiteSpace: "nowrap", flexShrink: 0,
             }}
           >
@@ -213,12 +213,12 @@ function StepItem({ num, icon, text }: { num: number; icon: string; text: React.
     <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
       <div style={{
         width: 40, height: 40, borderRadius: 12,
-        background: "#f0f9f4", border: "1px solid #d4edda",
+        background: "#fdf2f6", border: "1px solid #f0d4e0",
         display: "flex", alignItems: "center", justifyContent: "center",
         fontSize: 20, flexShrink: 0,
       }}>{icon}</div>
       <div style={{ flex: 1 }}>
-        <span style={{ fontSize: 11, color: "#3fca6b", fontWeight: 700 }}>STEP {num}</span>
+        <span style={{ fontSize: 11, color: "#e8a0bf", fontWeight: 700 }}>STEP {num}</span>
         <div style={{ fontSize: 13, color: "#333", lineHeight: 1.5, marginTop: 2 }}>{text}</div>
       </div>
     </div>

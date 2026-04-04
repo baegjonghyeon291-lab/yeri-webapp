@@ -229,7 +229,7 @@ function AnalysisResultCard({ message, onSend, onToggleWatchlist }: {
         borderRadius: 20, padding: '18px 16px',
         marginBottom: 10,
         boxShadow: '0 4px 20px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,1)',
-        border: '1px solid rgba(46,168,90,0.12)',
+        border: '1px solid rgba(212,138,170,0.12)',
       }}>
         {/* 타이틀 + 액션 버튼 */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
@@ -530,10 +530,10 @@ export default function MessageBubble({ message, showAvatar = true, onSend, onTo
           {showAvatar && (
             <div style={{
               width: 36, height: 36, borderRadius: 12,
-              background: "linear-gradient(135deg, #2ea85a 0%, #3fca6b 100%)",
+              background: "linear-gradient(135deg, #d48aaa 0%, #e8a0bf 100%)",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 18,
-              boxShadow: "0 2px 6px rgba(63,202,107,0.25)",
+              boxShadow: "0 2px 6px rgba(232,160,191,0.25)",
             }}>📈</div>
           )}
         </div>
@@ -584,7 +584,7 @@ export default function MessageBubble({ message, showAvatar = true, onSend, onTo
             background: "linear-gradient(135deg, #2ea85a 0%, #3fca6b 100%)",
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 18,
-            boxShadow: "0 2px 6px rgba(63,202,107,0.25)",
+            boxShadow: "0 2px 6px rgba(232,160,191,0.25)",
           }}>📈</div>
         )}
       </div>

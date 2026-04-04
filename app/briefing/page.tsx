@@ -72,7 +72,7 @@ function ReportCard({ report, onRefresh, loading, portfolioTickers = [] }: {
       })()}
       <div style={{ background: "#fff", borderRadius: 16, border: "1px solid var(--border)", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", overflow: "hidden" }}>
         <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--border)", background: "var(--accent-light)", display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 10, background: "linear-gradient(135deg, #2ea85a 0%, #3fca6b 100%)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>📈</div>
+          <div style={{ width: 32, height: 32, borderRadius: 10, background: "linear-gradient(135deg, #d48aaa 0%, #e8a0bf 100%)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>📈</div>
           <div>
             <div style={{ fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>예리의 브리핑</div>
             <div style={{ fontSize: 11, color: "var(--text-secondary)" }}>{new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric", weekday: "short" })}</div>

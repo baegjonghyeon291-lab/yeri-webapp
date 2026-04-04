@@ -348,14 +348,14 @@ export default function PortfolioPage() {
             {stats.items.filter(i => i.ticker).map((item, idx) => {
               const weight = stats.totalCurrent > 0 ? (item.current / stats.totalCurrent) * 100 : (item.invested / stats.totalInvested) * 100;
               if (weight <= 0) return null;
-              const colors = ["#3fca6b", "#3b82f6", "#f59e0b", "#6366f1", "#ec4899", "#14b8a6", "#f43f5e"];
+              const colors = ["#e8a0bf", "#3b82f6", "#f59e0b", "#6366f1", "#ec4899", "#14b8a6", "#f43f5e"];
               return <div key={item.ticker} style={{ width: `${weight}%`, background: colors[idx % colors.length], transition: "width 0.5s ease" }} />;
             })}
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
             {stats.items.filter(i => i.ticker).map((item, idx) => {
               const weight = stats.totalCurrent > 0 ? (item.current / stats.totalCurrent) * 100 : (item.invested / stats.totalInvested) * 100;
-              const colors = ["#3fca6b", "#3b82f6", "#f59e0b", "#6366f1", "#ec4899", "#14b8a6", "#f43f5e"];
+              const colors = ["#e8a0bf", "#3b82f6", "#f59e0b", "#6366f1", "#ec4899", "#14b8a6", "#f43f5e"];
               return (
                 <div key={item.ticker} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <div style={{ width: 10, height: 10, borderRadius: "50%", background: colors[idx % colors.length] }} />
@@ -424,7 +424,7 @@ export default function PortfolioPage() {
       <p style={{ color: "var(--text-secondary)", fontSize: 12, marginBottom: 20 }}>실제 보유 수량과 평단을 입력하여 수익률을 관리하세요</p>
 
       {/* 상단 총 자산 카드 */}
-      <div style={{ background: "linear-gradient(135deg, #1a3a2a 0%, #2ea85a 100%)", borderRadius: 16, padding: "20px 24px", color: "#fff", marginBottom: 24, boxShadow: "0 4px 12px rgba(46,168,90,0.2)" }}>
+      <div style={{ background: "linear-gradient(135deg, #3d1f2e 0%, #d48aaa 100%)", borderRadius: 16, padding: "20px 24px", color: "#fff", marginBottom: 24, boxShadow: "0 4px 12px rgba(212,138,170,0.2)" }}>
         <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>총 자산 가치</div>
         <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 12 }}>{(stats.totalCurrent || stats.totalInvested).toLocaleString()} <span style={{ fontSize: 14, fontWeight: 400 }}>{stats.totalCurrent > 0 ? "원/달러 합산" : "매입액 기준"}</span></div>
         <div style={{ display: "flex", gap: 16 }}>

@@ -127,13 +127,13 @@ export default function ChatLayout({
             fontStyle: "italic",
             fontWeight: 800,
             fontSize: 20,
-            color: "#1a3a2a",
+            color: "#3d1f2e",
             letterSpacing: "-0.3px",
             lineHeight: 1,
           }}>예리</span>
           <span style={{
             fontSize: 18, color: "var(--accent)", marginLeft: 1,
-            filter: "drop-shadow(0 1px 2px rgba(63,202,107,0.4))",
+            filter: "drop-shadow(0 1px 2px rgba(232,160,191,0.4))",
           }}>♥</span>
         </div>
 
@@ -144,7 +144,7 @@ export default function ChatLayout({
             <div style={{
               width: 6, height: 6, borderRadius: "50%",
               background: "#3fca6b",
-              boxShadow: "0 0 5px rgba(63,202,107,0.7)",
+              boxShadow: "0 0 5px rgba(232,160,191,0.7)",
             }} />
             <span style={{ fontSize: 10, color: "#3fca6b", fontWeight: 500 }}>분석 가능</span>
             {/* 버전 상태 배지 */}
@@ -260,10 +260,10 @@ export default function ChatLayout({
           <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginTop: 4 }}>
             <div style={{
               width: 36, height: 36, borderRadius: 12,
-              background: "linear-gradient(135deg, #2ea85a 0%, #3fca6b 100%)",
+              background: "linear-gradient(135deg, #d48aaa 0%, #e8a0bf 100%)",
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 18, flexShrink: 0,
-              boxShadow: "0 2px 6px rgba(63,202,107,0.25)",
+              boxShadow: "0 2px 6px rgba(232,160,191,0.25)",
             }}>📈</div>
             <div style={{ paddingTop: 22 }}>
               <div style={{

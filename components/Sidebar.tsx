@@ -144,7 +144,7 @@ export default function Sidebar() {
               fontWeight: 800,
               fontSize: 22,
               letterSpacing: "-0.5px",
-              color: "#1a3a2a",
+              color: "#3d1f2e",
               lineHeight: 1,
               transition: "transform 0.2s",
             }}>예리</span>
@@ -153,7 +153,7 @@ export default function Sidebar() {
               color: "var(--accent)",
               marginLeft: 1,
               lineHeight: 1,
-              filter: "drop-shadow(0 1px 2px rgba(63,202,107,0.4))",
+              filter: "drop-shadow(0 1px 2px rgba(232,160,191,0.4))",
             }}>♥</span>
           </div>
           <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 3, paddingLeft: 1, letterSpacing: "0.04em" }}>AI 투자 어시스턴트</div>
@@ -259,13 +259,13 @@ export default function Sidebar() {
               fontStyle: "italic",
               fontWeight: 800,
               fontSize: 20,
-              color: "#1a3a2a",
+              color: "#3d1f2e",
               letterSpacing: "-0.3px",
               lineHeight: 1,
             }}>예리</span>
             <span style={{
               fontSize: 18, color: "var(--accent)", marginLeft: 1,
-              filter: "drop-shadow(0 1px 2px rgba(63,202,107,0.4))",
+              filter: "drop-shadow(0 1px 2px rgba(232,160,191,0.4))",
             }}>♥</span>
           </div>
 
@@ -338,11 +338,11 @@ export default function Sidebar() {
                 fontFamily: "'Georgia', 'Noto Serif KR', serif",
                 fontStyle: "italic",
                 fontWeight: 800, fontSize: 22,
-                color: "#1a3a2a", letterSpacing: "-0.5px", lineHeight: 1,
+                color: "#3d1f2e", letterSpacing: "-0.5px", lineHeight: 1,
               }}>예리</span>
               <span style={{
                 fontSize: 20, color: "var(--accent)", marginLeft: 1,
-                filter: "drop-shadow(0 1px 2px rgba(63,202,107,0.4))",
+                filter: "drop-shadow(0 1px 2px rgba(232,160,191,0.4))",
               }}>♥</span>
             </div>
             <div style={{ fontSize: 10, color: "var(--text-muted)", letterSpacing: "0.04em" }}>AI 투자 어시스턴트</div>

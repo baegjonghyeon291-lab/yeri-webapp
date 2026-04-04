@@ -144,9 +144,9 @@ export default function UpdatePrompt() {
             </p>
             <button onClick={handleUpdate} style={{
               width: "100%", padding: 18,
-              background: "linear-gradient(135deg,#2ea85a,#3fca6b)", color: "#fff",
+              background: "linear-gradient(135deg,#d48aaa,#e8a0bf)", color: "#fff",
               border: "none", borderRadius: 16, fontSize: 17, fontWeight: 800,
-              cursor: "pointer", boxShadow: "0 8px 20px rgba(63,202,107,.35)",
+              cursor: "pointer", boxShadow: "0 8px 20px rgba(232,160,191,.35)",
               letterSpacing: "-.3px",
             }}>
               ✨ 업데이트 하기

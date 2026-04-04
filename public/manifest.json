@@ -5,8 +5,8 @@
   "start_url": "/chat",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#1a3a2a",
-  "theme_color": "#2ea85a",
+  "background_color": "#3d1f2e",
+  "theme_color": "#e8a0bf",
   "icons": [
     {
       "src": "/icon-192.png",
@@ -21,6 +21,9 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["finance", "utilities"],
+  "categories": [
+    "finance",
+    "utilities"
+  ],
   "lang": "ko"
 }

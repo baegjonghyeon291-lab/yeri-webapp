@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  themeColor: "#2ea85a",
+  themeColor: "#e8a0bf",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -38,7 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="JH♡YR" />
-        <meta name="theme-color" content="#2ea85a" />
+        <meta name="theme-color" content="#e8a0bf" />
         {/* Service Worker 등록 — 매번 서버에서 sw.js 새로 체크 */}
         <script dangerouslySetInnerHTML={{ __html: `
           if ('serviceWorker' in navigator) {

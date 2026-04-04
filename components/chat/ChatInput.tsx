@@ -218,7 +218,7 @@ export default function ChatInput({ value, onChange, onSend, onSendText, loading
             color: canSend ? "#fff" : "var(--text-muted)",
             fontWeight: 700, cursor: canSend ? "pointer" : "not-allowed",
             fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center",
-            flexShrink: 0, boxShadow: canSend ? "0 2px 8px rgba(63,202,107,0.35)" : "none",
+            flexShrink: 0, boxShadow: canSend ? "0 2px 8px rgba(232,160,191,0.35)" : "none",
           }}
         >
           {loading

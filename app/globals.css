@@ -9,16 +9,16 @@
   --bg-chat: #f0f2f5;         /* 채팅 메시지 영역 배경 */
 
   /* ── 말풍선 ── */
-  --bubble-user-bg: #3fca6b;    /* 유저 — 포인트 그린 */
+  --bubble-user-bg: #e8a0bf;    /* 유저 — 포인트 소프트 핑크 */
   --bubble-user-text: #fff;
   --bubble-bot-bg: #ffffff;     /* 봇 — 흰 카드 */
   --bubble-bot-text: #1a2233;
   --bubble-bot-shadow: 0 1px 3px rgba(0,0,0,0.08);
 
   /* ── 포인트 컬러 ── */
-  --accent: #3fca6b;
-  --accent-hover: #34b85e;
-  --accent-light: #e8f9ef;
+  --accent: #e8a0bf;
+  --accent-hover: #d07fa0;
+  --accent-light: #fdf2f6;
 
   /* ── 텍스트 ── */
   --text-primary: #1a2233;
@@ -31,13 +31,13 @@
   --border-input: #d1d9e6;
 
   /* ── 사이드바 nav ── */
-  --nav-active-bg: #e8f9ef;
-  --nav-active-color: #2ea85a;
-  --nav-hover-bg: #f5f7fa;
+  --nav-active-bg: #fdf2f6;
+  --nav-active-color: #d48aaa;
+  --nav-hover-bg: #fef8fa;
 
   /* ── 태그/뱃지 ── */
-  --badge-bg: #e8f9ef;
-  --badge-color: #2ea85a;
+  --badge-bg: #fdf2f6;
+  --badge-color: #d48aaa;
 
   /* ── 통합 리스크 시스템 ── */
   --status-high-bg: #fff1f2;
