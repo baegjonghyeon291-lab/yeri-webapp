@@ -103,7 +103,7 @@ export default function UpdatePrompt() {
             boxShadow: "0 24px 48px rgba(0,0,0,.5)",
             animation: "slideUp .4s cubic-bezier(.175,.885,.32,1.275) forwards",
           }}>
-            <div style={{ fontSize: 56, marginBottom: 20, animation: "bounce 2s infinite" }}>🚀</div>
+            <div style={{ fontSize: 56, marginBottom: 20, animation: "bounce 2s infinite" }}>💌</div>
             <h2 style={{ margin: "0 0 10px", color: "#1a1a1a", fontSize: 24, fontWeight: 800 }}>업데이트 필요</h2>
             <p style={{ margin: "0 0 8px", color: "#666", fontSize: 14, lineHeight: 1.6, wordBreak: "keep-all" }}>
               예리 AI의 새로운 버전이 있습니다!<br/>최신 버전으로 교체해 주세요.
