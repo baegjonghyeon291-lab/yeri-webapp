@@ -30,12 +30,14 @@ export async function forceUpdate(): Promise<void> {
     }
   }
 
-  // 3. 버전 관련 localStorage / sessionStorage 정리
+  // 3. 버전 관련 storage 정리 + 현재 빌드 해시 기록
   try {
-    localStorage.removeItem("appVersion");
+    // appVersion은 삭제하지 않고 현재 빌드로 설정 (리로드 후 첫설치 블로커 방지)
+    const buildHash = (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_BUILD_HASH) || 'updated';
+    localStorage.setItem("appVersion", buildHash);
     localStorage.removeItem("sw-version");
     sessionStorage.clear();
-    console.log("[ForceUpdate] Storage cleared");
+    console.log("[ForceUpdate] Storage cleared, appVersion set to:", buildHash);
   } catch (e) {
     console.error("[ForceUpdate] Storage clear failed", e);
   }

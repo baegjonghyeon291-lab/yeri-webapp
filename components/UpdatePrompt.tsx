@@ -20,11 +20,20 @@ export default function UpdatePrompt() {
     // ── 업데이트 완료 후 재시작 감지 (성공 토스트) ──
     if (currentBuild !== "dev") {
       const lastVersion = localStorage.getItem("appVersion");
-      if (lastVersion && lastVersion !== currentBuild) {
+
+      if (!lastVersion) {
+        // ★ 첫 설치 또는 재설치 → 1회 업데이트 확인 화면 표시
+        setNeedsUpdate(true);
+        window.dispatchEvent(new CustomEvent("yeri-version-status", { detail: "outdated" }));
+        return; // 폴링 불필요 (어차피 블로커 뜸)
+      }
+
+      if (lastVersion !== currentBuild) {
+        // 이전 버전에서 새 버전으로 바뀐 경우 → 성공 토스트
         setShowSuccessToast(true);
         setTimeout(() => setShowSuccessToast(false), 6000);
+        localStorage.setItem("appVersion", currentBuild);
       }
-      localStorage.setItem("appVersion", currentBuild);
     }
 
     // ── version.json 폴링 (버전 비교만, 자동 동작 없음) ──
@@ -63,7 +72,7 @@ export default function UpdatePrompt() {
     setUpdating(true);
     window.dispatchEvent(new CustomEvent("yeri-version-status", { detail: "updating" }));
     await new Promise(r => setTimeout(r, 2000));
-    await forceUpdate();
+    await forceUpdate(); // sets appVersion, clears caches, hard reloads
   };
 
   return (
