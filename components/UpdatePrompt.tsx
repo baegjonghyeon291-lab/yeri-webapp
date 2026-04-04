@@ -33,21 +33,26 @@ export default function UpdatePrompt() {
       localStorage.setItem("appVersion", currentBuild);
     }
 
-    // ── 1. Service Worker 업데이트 감지 ──
+    // ── 1. Service Worker: 즉시 새 SW 등록으로 구버전 교체 ──
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.ready.then((reg) => {
-        setInterval(() => reg.update(), 2 * 60 * 1000);
+      // ★ 핵심: 앱 부팅 시 즉시 새 sw.js를 등록.
+      // 구버전 SW가 설치되어 있어도 새 SW가 설치 → skipWaiting → 교체됨.
+      navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" })
+        .then((reg) => {
+          // 주기적 업데이트 체크 (2분마다)
+          setInterval(() => reg.update(), 2 * 60 * 1000);
 
-        reg.addEventListener("updatefound", () => {
-          const newSW = reg.installing;
-          if (!newSW) return;
-          newSW.addEventListener("statechange", () => {
-            if (newSW.state === "installed" && navigator.serviceWorker.controller) {
-              newSW.postMessage("SKIP_WAITING");
-            }
+          reg.addEventListener("updatefound", () => {
+            const newSW = reg.installing;
+            if (!newSW) return;
+            newSW.addEventListener("statechange", () => {
+              if (newSW.state === "installed" && navigator.serviceWorker.controller) {
+                newSW.postMessage("SKIP_WAITING");
+              }
+            });
           });
-        });
-      });
+        })
+        .catch((e) => console.error("[SW] Registration failed:", e));
 
       navigator.serviceWorker.addEventListener("controllerchange", () => {
         if (!updating) {
@@ -65,27 +70,40 @@ export default function UpdatePrompt() {
 
     async function checkVersion() {
       try {
-        const res = await fetch(`/version.json?t=${Date.now()}`, {
+        // ★ 절대 URL + 타임스탬프 + Cache-Control 3중 캐시 무효화
+        // 이렇게 하면 SW가 가로채더라도 네트워크 직통 fetch 됨
+        const absoluteUrl = `${window.location.origin}/version.json?_=${Date.now()}&bust=${Math.random()}`;
+        const res = await fetch(absoluteUrl, {
           cache: "no-store",
-          headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" },
+          headers: { "Cache-Control": "no-cache, no-store", "Pragma": "no-cache" },
         });
         const data = await res.json();
-        if (data.version && data.version !== "__BUILD_VERSION__" && !data.version.includes(currentBuild)) {
+
+        // data.version 예: "0d1da8a-1775261931421"
+        // currentBuild 예: "5726b1a" (구버전) 또는 "0d1da8a" (최신)
+        const serverVersion = data.version;
+        const isStale = serverVersion
+          && serverVersion !== "__BUILD_VERSION__"
+          && !serverVersion.includes(currentBuild);
+
+        if (isStale) {
+          console.log(`[VersionCheck] OUTDATED — local:${currentBuild} server:${serverVersion}`);
           setNeedsUpdate(true);
           setVersionStatus("outdated");
-          // 커스텀 이벤트로 다른 컴포넌트에 알림
           window.dispatchEvent(new CustomEvent("yeri-version-status", { detail: "outdated" }));
         } else {
+          console.log(`[VersionCheck] OK — local:${currentBuild} server:${serverVersion}`);
           setVersionStatus("latest");
           window.dispatchEvent(new CustomEvent("yeri-version-status", { detail: "latest" }));
         }
-      } catch {
+      } catch (e) {
+        console.error("[VersionCheck] fetch failed:", e);
         // 네트워크 실패 시 기존 상태 유지
       }
     }
 
-    // 앱 시작 후 2초 뒤 첫 체크, 이후 2분마다
-    const t1 = setTimeout(checkVersion, 2000);
+    // ★ 즉시 체크 (지연 없음) + 이후 2분마다
+    checkVersion();
     const t2 = setInterval(checkVersion, 2 * 60 * 1000);
 
     // 앱 포그라운드 복귀 시 즉시 체크
@@ -95,7 +113,6 @@ export default function UpdatePrompt() {
     document.addEventListener("visibilitychange", onVisible);
 
     return () => {
-      clearTimeout(t1);
       clearInterval(t2);
       document.removeEventListener("visibilitychange", onVisible);
     };
