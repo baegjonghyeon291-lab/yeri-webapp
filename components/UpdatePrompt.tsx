@@ -3,27 +3,20 @@ import { useEffect, useState } from "react";
 import { forceUpdate } from "@/lib/forceUpdate";
 
 /**
- * PWA 자동 업데이트 감지 + 강제 업데이트 블로커 컴포넌트.
- *
- * 동작:
- * 1. 앱 시작 시 /version.json 폴링으로 서버 최신 빌드 해시 확인
- * 2. 현재 빌드 해시(NEXT_PUBLIC_BUILD_HASH)와 비교
- * 3. 불일치 → 풀스크린 블로커 표시 (구버전 사용 차단)
- * 4. 버튼 클릭 → SW unregister + caches 삭제 + storage 정리 + 하드 리로드
- * 5. 업데이트 성공 후 앱 재시작 → 하트 파티클 토스트 표시
- * 6. Service Worker updatefound → 자동 skipWaiting → controllerchange → reload
+ * PWA 수동 업데이트 컴포넌트.
+ * - 자동 새로고침 없음 (수동 버튼 클릭만)
+ * - 구버전 감지 → 풀스크린 블로커 + "업데이트 하기" 버튼
+ * - 버튼 클릭 → 하트 로딩 화면 → SW/캐시 삭제 → 하드 리로드
  */
 export default function UpdatePrompt() {
   const [needsUpdate, setNeedsUpdate] = useState(false);
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [updating, setUpdating] = useState(false);
-  // 전역 update 상태를 공유하기 위한 커스텀 이벤트 발행
-  const [versionStatus, setVersionStatus] = useState<"checking" | "latest" | "outdated" | "updating">("checking");
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   useEffect(() => {
     const currentBuild = process.env.NEXT_PUBLIC_BUILD_HASH || "dev";
 
-    // ── 0. 업데이트 완료 후 재시작 감지 ──
+    // ── 업데이트 완료 후 재시작 감지 ──
     if (currentBuild !== "dev") {
       const lastVersion = localStorage.getItem("appVersion");
       if (lastVersion && lastVersion !== currentBuild) {
@@ -33,229 +26,169 @@ export default function UpdatePrompt() {
       localStorage.setItem("appVersion", currentBuild);
     }
 
-    // ── 1. Service Worker: 즉시 새 SW 등록으로 구버전 교체 ──
+    // ── SW 즉시 재등록 (구버전 SW 교체 유도) ──
     if ("serviceWorker" in navigator) {
-      // ★ 핵심: 앱 부팅 시 즉시 새 sw.js를 등록.
-      // 구버전 SW가 설치되어 있어도 새 SW가 설치 → skipWaiting → 교체됨.
-      navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" })
-        .then((reg) => {
-          // 주기적 업데이트 체크 (2분마다)
-          setInterval(() => reg.update(), 2 * 60 * 1000);
-
-          reg.addEventListener("updatefound", () => {
-            const newSW = reg.installing;
-            if (!newSW) return;
-            newSW.addEventListener("statechange", () => {
-              if (newSW.state === "installed" && navigator.serviceWorker.controller) {
-                newSW.postMessage("SKIP_WAITING");
-              }
-            });
-          });
-        })
-        .catch((e) => console.error("[SW] Registration failed:", e));
-
-      navigator.serviceWorker.addEventListener("controllerchange", () => {
-        if (!updating) {
-          setUpdating(true);
-          window.location.reload();
-        }
-      });
+      navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).catch(() => {});
     }
 
-    // ── 2. version.json 폴링 ──
-    if (currentBuild === "dev") {
-      setVersionStatus("latest");
-      return;
-    }
+    // ── version.json 폴링 ──
+    if (currentBuild === "dev") return;
 
     async function checkVersion() {
       try {
-        // ★ 절대 URL + 타임스탬프 + Cache-Control 3중 캐시 무효화
-        // 이렇게 하면 SW가 가로채더라도 네트워크 직통 fetch 됨
-        const absoluteUrl = `${window.location.origin}/version.json?_=${Date.now()}&bust=${Math.random()}`;
-        const res = await fetch(absoluteUrl, {
+        const url = `${window.location.origin}/version.json?_=${Date.now()}&r=${Math.random()}`;
+        const res = await fetch(url, {
           cache: "no-store",
           headers: { "Cache-Control": "no-cache, no-store", "Pragma": "no-cache" },
         });
         const data = await res.json();
-
-        // data.version 예: "0d1da8a-1775261931421"
-        // currentBuild 예: "5726b1a" (구버전) 또는 "0d1da8a" (최신)
-        const serverVersion = data.version;
-        const isStale = serverVersion
-          && serverVersion !== "__BUILD_VERSION__"
-          && !serverVersion.includes(currentBuild);
+        const isStale = data.version
+          && data.version !== "__BUILD_VERSION__"
+          && !data.version.includes(currentBuild);
 
         if (isStale) {
-          console.log(`[VersionCheck] OUTDATED — local:${currentBuild} server:${serverVersion}`);
           setNeedsUpdate(true);
-          setVersionStatus("outdated");
           window.dispatchEvent(new CustomEvent("yeri-version-status", { detail: "outdated" }));
         } else {
-          console.log(`[VersionCheck] OK — local:${currentBuild} server:${serverVersion}`);
-          setVersionStatus("latest");
           window.dispatchEvent(new CustomEvent("yeri-version-status", { detail: "latest" }));
         }
-      } catch (e) {
-        console.error("[VersionCheck] fetch failed:", e);
-        // 네트워크 실패 시 기존 상태 유지
-      }
+      } catch { /* 네트워크 실패 무시 */ }
     }
 
-    // ★ 즉시 체크 (지연 없음) + 이후 2분마다
     checkVersion();
-    const t2 = setInterval(checkVersion, 2 * 60 * 1000);
-
-    // 앱 포그라운드 복귀 시 즉시 체크
-    const onVisible = () => {
-      if (document.visibilityState === "visible") checkVersion();
-    };
+    const t = setInterval(checkVersion, 2 * 60 * 1000);
+    const onVisible = () => { if (document.visibilityState === "visible") checkVersion(); };
     document.addEventListener("visibilitychange", onVisible);
+    return () => { clearInterval(t); document.removeEventListener("visibilitychange", onVisible); };
+  }, []);
 
-    return () => {
-      clearInterval(t2);
-      document.removeEventListener("visibilitychange", onVisible);
-    };
-  }, [updating]);
-
-  const handleForceUpdate = async () => {
+  // 수동 업데이트 버튼 클릭
+  const handleUpdate = async () => {
     setUpdating(true);
-    setVersionStatus("updating");
     window.dispatchEvent(new CustomEvent("yeri-version-status", { detail: "updating" }));
+    // 로딩 화면을 2초 보여준 뒤 실제 퍼지 + 리로드
+    await new Promise(r => setTimeout(r, 2000));
     await forceUpdate();
   };
 
   return (
     <>
-      {/* ── 업데이트 완료 성공 토스트 ── */}
+      {/* ── 업데이트 성공 토스트 ── */}
       {showSuccessToast && (
-        <div
-          style={{
-            position: "fixed",
-            bottom: "80px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 999999,
-            background: "linear-gradient(135deg, rgba(255, 105, 180, 0.95), rgba(255, 20, 147, 0.95))",
-            color: "#fff",
-            padding: "16px 28px",
-            borderRadius: "50px",
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            fontSize: 16,
-            fontWeight: 700,
-            boxShadow: "0 10px 40px rgba(255, 20, 147, 0.4)",
-            animation: "toastPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards, fadeOut 1s ease 5s forwards",
-            whiteSpace: "nowrap"
-          }}
-        >
-          <div className="heart-particles">
-            <span className="p1">💕</span>
-            <span className="p2">💖</span>
-            <span className="p3">✨</span>
-          </div>
+        <div style={{
+          position: "fixed", bottom: 80, left: "50%", transform: "translateX(-50%)",
+          zIndex: 999999, background: "linear-gradient(135deg,#ff69b4,#ff1493)",
+          color: "#fff", padding: "16px 28px", borderRadius: 50,
+          display: "flex", alignItems: "center", gap: 12,
+          fontSize: 16, fontWeight: 700,
+          boxShadow: "0 10px 40px rgba(255,20,147,0.4)",
+          animation: "toastPop .6s cubic-bezier(.34,1.56,.64,1) forwards, fadeOut 1s ease 5s forwards",
+          whiteSpace: "nowrap",
+        }}>
           <span style={{ fontSize: 22 }}>✨</span>
           <span>귀염둥이 예리야 업데이트 됐어!! 💕</span>
           <style>{`
-            @keyframes toastPop {
-              from { opacity: 0; bottom: 40px; transform: translateX(-50%) scale(0.8); }
-              to { opacity: 1; bottom: 80px; transform: translateX(-50%) scale(1); }
-            }
-            @keyframes fadeOut {
-              from { opacity: 1; }
-              to { opacity: 0; pointer-events: none; }
-            }
-            .heart-particles span {
-              position: absolute; font-size: 20px; opacity: 0; pointer-events: none;
-            }
-            .heart-particles .p1 { left: 10%; animation: floatUp 1.5s ease-out infinite 0.2s; }
-            .heart-particles .p2 { left: 50%; animation: floatUp 1.8s ease-out infinite 0.5s; }
-            .heart-particles .p3 { right: 10%; animation: floatUp 1.6s ease-out infinite 0.1s; }
-            @keyframes floatUp {
-              0% { transform: translateY(0) scale(0.5) rotate(0deg); opacity: 0; }
-              50% { opacity: 0.8; transform: scale(1.2) rotate(15deg); }
-              100% { transform: translateY(-30px) scale(0.8) rotate(-10deg); opacity: 0; }
-            }
+            @keyframes toastPop { from{opacity:0;bottom:40px;transform:translateX(-50%) scale(.8)} to{opacity:1;bottom:80px;transform:translateX(-50%) scale(1)} }
+            @keyframes fadeOut { from{opacity:1} to{opacity:0;pointer-events:none} }
           `}</style>
         </div>
       )}
 
-      {/* ── 풀스크린 블로커 — 구버전 사용 차단 ── */}
-      {needsUpdate && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0, left: 0, right: 0, bottom: 0,
-            zIndex: 9999999,
-            backgroundColor: "rgba(0, 0, 0, 0.88)",
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            animation: "fadeIn 0.3s ease-out forwards",
-          }}
-        >
+      {/* ── 업데이트 하기 블로커 (구버전 감지 시) ── */}
+      {needsUpdate && !updating && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999999,
+          background: "rgba(0,0,0,.88)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          animation: "fadeIn .3s ease forwards",
+        }}>
           <div style={{
-            background: "#fff",
-            padding: "44px 32px 36px",
-            borderRadius: "28px",
-            textAlign: "center",
-            width: "88%",
-            maxWidth: "360px",
-            boxShadow: "0 24px 48px rgba(0,0,0,0.5)",
-            animation: "slideUpFade 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards"
+            background: "#fff", padding: "44px 32px 36px", borderRadius: 28,
+            textAlign: "center", width: "88%", maxWidth: 360,
+            boxShadow: "0 24px 48px rgba(0,0,0,.5)",
+            animation: "slideUp .4s cubic-bezier(.175,.885,.32,1.275) forwards",
           }}>
-            <div style={{ fontSize: "56px", marginBottom: "20px", animation: "bounceInfinite 2s infinite" }}>🚀</div>
-            <h2 style={{ margin: "0 0 10px", color: "#1a1a1a", fontSize: "24px", fontWeight: "800", letterSpacing: "-0.5px" }}>
-              업데이트 필요
-            </h2>
-            <p style={{ margin: "0 0 8px", color: "#666", fontSize: "14px", lineHeight: "1.6", wordBreak: "keep-all" }}>
-              예리 AI의 새로운 버전이 감지되었습니다!<br/>
-              원활한 사용을 위해 최신 버전으로<br/>교체해 주세요.
+            <div style={{ fontSize: 56, marginBottom: 20, animation: "bounce 2s infinite" }}>🚀</div>
+            <h2 style={{ margin: "0 0 10px", color: "#1a1a1a", fontSize: 24, fontWeight: 800 }}>업데이트 필요</h2>
+            <p style={{ margin: "0 0 8px", color: "#666", fontSize: 14, lineHeight: 1.6, wordBreak: "keep-all" }}>
+              예리 AI의 새로운 버전이 있습니다!<br/>최신 버전으로 교체해 주세요.
             </p>
-            <p style={{ margin: "0 0 28px", color: "#aaa", fontSize: "11px" }}>
-              현재 앱: {process.env.NEXT_PUBLIC_BUILD_HASH || "dev"}
+            <p style={{ margin: "0 0 28px", color: "#aaa", fontSize: 11 }}>
+              현재: {process.env.NEXT_PUBLIC_BUILD_HASH || "dev"}
             </p>
-
-            <button
-              onClick={handleForceUpdate}
-              disabled={updating}
-              style={{
-                width: "100%",
-                padding: "18px",
-                background: updating ? "#e0e0e0" : "linear-gradient(135deg, #2ea85a 0%, #3fca6b 100%)",
-                color: "#fff",
-                border: "none",
-                borderRadius: "16px",
-                fontSize: "17px",
-                fontWeight: "800",
-                cursor: updating ? "default" : "pointer",
-                boxShadow: updating ? "none" : "0 8px 20px rgba(63,202,107,0.35)",
-                transition: "all 0.15s",
-                transform: updating ? "scale(0.97)" : "scale(1)",
-                letterSpacing: "-0.3px",
-              }}
-            >
-              {updating ? "⏳ 업데이트 중..." : "✨ 업데이트하기"}
+            <button onClick={handleUpdate} style={{
+              width: "100%", padding: 18,
+              background: "linear-gradient(135deg,#2ea85a,#3fca6b)", color: "#fff",
+              border: "none", borderRadius: 16, fontSize: 17, fontWeight: 800,
+              cursor: "pointer", boxShadow: "0 8px 20px rgba(63,202,107,.35)",
+              letterSpacing: "-.3px",
+            }}>
+              ✨ 업데이트 하기
             </button>
+          </div>
+          <style>{`
+            @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+            @keyframes slideUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+            @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+          `}</style>
+        </div>
+      )}
 
-            <p style={{ margin: "16px 0 0", color: "#999", fontSize: "10px", lineHeight: "1.5" }}>
-              캐시 삭제 → 서비스 워커 교체 → 최신 버전 재설치
-            </p>
+      {/* ── 업데이트 진행 중 로딩 화면 ── */}
+      {updating && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999999,
+          background: "linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)",
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          animation: "fadeIn .3s ease forwards",
+        }}>
+          {/* 하트 파티클 배경 */}
+          <div style={{ position: "absolute", inset: 0, overflow: "hidden", pointerEvents: "none" }}>
+            {["💕","💖","✨","💗","♡","💫","💕","✨","💖","♡","💗","💫"].map((h, i) => (
+              <span key={i} style={{
+                position: "absolute",
+                left: `${8 + (i * 7.5) % 84}%`,
+                fontSize: 16 + (i % 3) * 8,
+                opacity: 0,
+                animation: `heartFloat ${3 + (i % 3)}s ease-in-out ${i * 0.3}s infinite`,
+              }}>{h}</span>
+            ))}
           </div>
 
+          {/* 로딩 스피너 */}
+          <div style={{
+            width: 80, height: 80, borderRadius: "50%",
+            border: "4px solid rgba(255,255,255,.15)",
+            borderTopColor: "#ff69b4",
+            animation: "spin 1s linear infinite",
+            marginBottom: 32,
+          }} />
+
+          {/* 메인 문구 */}
+          <h2 style={{
+            color: "#fff", fontSize: 24, fontWeight: 800,
+            marginBottom: 16, letterSpacing: "-.3px",
+            animation: "pulse 2s ease-in-out infinite",
+          }}>
+            새 버전 적용중...
+          </h2>
+
+          {/* 서브 문구 */}
+          <p style={{
+            color: "#ff69b4", fontSize: 16, fontWeight: 700,
+            letterSpacing: 1,
+          }}>
+            ♡♡ 좀만 기다려 귀요미 ♡♡
+          </p>
+
           <style>{`
-            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-            @keyframes slideUpFade {
-              from { opacity: 0; transform: translateY(30px); }
-              to { opacity: 1; transform: translateY(0); }
-            }
-            @keyframes bounceInfinite {
-              0%, 100% { transform: translateY(0); }
-              50% { transform: translateY(-10px); }
+            @keyframes spin { to{transform:rotate(360deg)} }
+            @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.7} }
+            @keyframes heartFloat {
+              0% { transform:translateY(100vh) rotate(0deg); opacity:0; }
+              10% { opacity:.6; }
+              90% { opacity:.6; }
+              100% { transform:translateY(-20vh) rotate(360deg); opacity:0; }
             }
           `}</style>
         </div>
