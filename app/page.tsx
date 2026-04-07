@@ -27,7 +27,7 @@ export default function Home() {
   if (loading) return <LoadingOverlay step={1} />;
 
   return (
-    <div style={{ maxWidth: 800, margin: "0 auto", padding: "20px 16px 80px", color: "var(--text-primary)", fontFamily: "var(--font-sans)", minHeight: "100vh" }}>
+    <div style={{ height: "100%", overflowY: "auto", maxWidth: 800, margin: "0 auto", padding: "20px 16px 80px", color: "var(--text-primary)", fontFamily: "var(--font-sans)" }}>
       
       {/* ── 헤더 ── */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, paddingTop: 12 }}>
