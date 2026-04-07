@@ -91,6 +91,7 @@ export default function PortfolioPage() {
   const [newMemo, setNewMemo] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isConfirmedSuggestion, setIsConfirmedSuggestion] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -207,9 +208,24 @@ export default function PortfolioPage() {
       {/* 헤더 */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
         <h1 style={{ fontSize: 20, fontWeight: 800, color: "var(--text-primary)" }}>🗂️ 내 포트폴리오</h1>
-        <button onClick={loadPortfolio} disabled={loading} style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid var(--border)", background: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", color: "var(--text-secondary)" }}>🔄 새로고침</button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={() => setShowGuide(!showGuide)} style={{ padding: "6px 10px", borderRadius: 8, border: "none", background: "var(--accent-light)", color: "var(--accent)", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+            {showGuide ? "닫기" : "📋 설명서"}
+          </button>
+          <button onClick={loadPortfolio} disabled={loading} style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid var(--border)", background: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", color: "var(--text-secondary)" }}>🔄 새로고침</button>
+        </div>
       </div>
-      <p style={{ color: "var(--text-secondary)", fontSize: 12, marginBottom: 20 }}>보유 종목을 등록하면 실시간 상태 분석과 전략 참고를 받을 수 있어요</p>
+      <p style={{ color: "var(--text-secondary)", fontSize: 12, marginBottom: 12 }}>보유 종목을 등록하면 실시간 상태 분석과 전략 참고를 받을 수 있어요</p>
+
+      {showGuide && (
+        <div style={{ position: "relative", background: "#f8fafc", borderRadius: 12, border: "1px solid var(--border)", padding: "16px", marginBottom: 20, fontSize: 13, boxShadow: "0 2px 10px rgba(0,0,0,0.03)" }}>
+          <button onClick={() => setShowGuide(false)} style={{ position: "absolute", top: 12, right: 12, background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", fontSize: 14 }}>✕</button>
+          <div style={{ color: "var(--accent)", fontSize: 14, fontWeight: 800 }}>💡 포트폴리오 활용 가이드 (준비 중)</div>
+          <p style={{ marginTop: 8, color: "var(--text-secondary)", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
+            - 종목 추가 및 관리 방법\n- 배지 단계별 리스크 해석 가이드\n- 수익률과 점수에 따른 동적 전략 등 상세 사용법이 이곳에 채워집니다.
+          </p>
+        </div>
+      )}
 
       {error && (
         <div style={{ padding: "12px 16px", borderRadius: 12, background: "#fff8f8", border: "1px solid #f5c2cc", color: "#d64060", fontSize: 13, marginBottom: 16 }}>⚠️ {error}</div>

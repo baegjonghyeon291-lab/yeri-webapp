@@ -140,6 +140,7 @@ export default function BriefingPage() {
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState(1);
   const [error, setError] = useState("");
+  const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -229,9 +230,25 @@ export default function BriefingPage() {
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "var(--bg-app)" }}>
       {loading && <LoadingOverlay step={loadingStep} />}
       <div style={{ padding: "14px 24px", background: "#fff", borderBottom: "1px solid var(--border)", flexShrink: 0, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-        <div style={{ fontWeight: 800, fontSize: 16, color: "var(--text-primary)" }}>📊 브리핑</div>
-        <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>실제 시장 데이터 + 뉴스 기반 AI 분석</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: 16, color: "var(--text-primary)" }}>📊 브리핑</div>
+            <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>실제 시장 데이터 + 뉴스 기반 AI 분석</div>
+          </div>
+          <button onClick={() => setShowGuide(!showGuide)} style={{ background: "var(--accent-light)", color: "var(--accent)", border: "none", padding: "6px 12px", borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+            {showGuide ? "닫기" : "📋 브리핑 설명서"}
+          </button>
+        </div>
       </div>
+      
+      {showGuide && (
+        <div style={{ padding: "16px 24px", background: "#f8fafc", borderBottom: "1px solid var(--border)", fontSize: 13, color: "var(--text-primary)", lineHeight: 1.6, flexShrink: 0 }}>
+          <div style={{ fontWeight: 800, color: "var(--accent)", fontSize: 14 }}>💡 브리핑 활용 가이드 (준비 중)</div>
+          <p style={{ marginTop: 8, color: "var(--text-secondary)", whiteSpace: "pre-wrap" }}>
+            여기에 브리핑에 대한 사용 방법, 시장 트렌드 이해하기, 7팩터 점수 기준표 등\n실제 상세 데이터가 안내될 예정입니다.
+          </p>
+        </div>
+      )}
       <div style={{ display: "flex", gap: 0, borderBottom: "1px solid var(--border)", background: "#fff", flexShrink: 0 }}>
         {(["market", "watchlist"] as Tab[]).map((t) => (
           <button key={t} onClick={() => setTab(t)} style={{ flex: 1, padding: "12px 0", border: "none", borderBottom: tab === t ? "2px solid var(--accent)" : "2px solid transparent", background: "transparent", color: tab === t ? "var(--nav-active-color)" : "var(--text-secondary)", fontWeight: tab === t ? 700 : 400, fontSize: 13, cursor: "pointer", transition: "all 0.15s" }}>
