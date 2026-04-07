@@ -99,6 +99,15 @@ interface PortfolioData {
   message?: string;
 }
 
+interface HistoryComparison {
+  current: number;
+  yesterday: { diff: number; diffPct: number; value: number } | null;
+  lastWeek: { diff: number; diffPct: number; value: number } | null;
+  lastMonth: { diff: number; diffPct: number; value: number } | null;
+  max30?: number;
+  min30?: number;
+}
+
 // 상태 배지 스타일
 function getBadgeStyle(badge: string) {
   switch (badge) {
@@ -116,6 +125,7 @@ export default function PortfolioPage() {
 
   // ── 상태 ──
   const [portfolio, setPortfolio] = useState<PortfolioData | null>(null);
+  const [historyData, setHistoryData] = useState<HistoryComparison | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState("");
   const [addMode, setAddMode] = useState(false);
@@ -145,9 +155,14 @@ export default function PortfolioPage() {
     setLoadingMsg("실시간 데이터 수집 + 7팩터 분석 중...");
     setError("");
     try {
-      const res = await fetch(`${API}/api/portfolio/${sessionId}`);
-      const data = await res.json();
+      const [resPortfolio, resHistory] = await Promise.all([
+        fetch(`${API}/api/portfolio/${sessionId}`),
+        fetch(`${API}/api/portfolio/${sessionId}/history`)
+      ]);
+      const data = await resPortfolio.json();
+      const hist = await resHistory.json();
       setPortfolio(data);
+      if (hist.comparison) setHistoryData(hist.comparison);
     } catch (e: any) {
       setError(e.message || "포트폴리오를 불러올 수 없습니다.");
     } finally {
@@ -406,6 +421,38 @@ export default function PortfolioPage() {
               <div style={{ fontSize: 15, fontWeight: 700 }}>{summary.holdingCount}개</div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ═══ 포트폴리오 히스토리 ═══ */}
+      {historyData && hasHoldings && (
+        <div style={{ background: "#fff", borderRadius: 16, padding: 16, border: "1px solid var(--border)", marginBottom: 20 }}>
+          <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 12, color: "var(--text-primary)" }}>📈 자산 흐름 리포트</div>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+            {[
+              { label: "어제 대비", data: historyData.yesterday },
+              { label: "1주 전 대비", data: historyData.lastWeek },
+              { label: "한 달 전 대비", data: historyData.lastMonth },
+            ].map(item => (
+              <div key={item.label} style={{ flex: 1, background: "#f8fafc", padding: "10px", borderRadius: 8, textAlign: "center" }}>
+                <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>{item.label}</div>
+                {item.data ? (
+                  <div style={{ fontSize: 13, fontWeight: 800, color: item.data.diff >= 0 ? "#10b981" : "#ef4444" }}>
+                    {item.data.diff >= 0 ? "▲" : "▼"}${Math.abs(Math.round(item.data.diff)).toLocaleString()}
+                    <div style={{ fontSize: 10, marginTop: 2 }}>({item.data.diffPct >= 0 ? "+" : ""}{item.data.diffPct.toFixed(2)}%)</div>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 11, color: "var(--text-muted)" }}>-</div>
+                )}
+              </div>
+            ))}
+          </div>
+          {historyData.max30 !== undefined && historyData.min30 !== undefined && (
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12, paddingTop: 12, borderTop: "1px dashed var(--border)", fontSize: 11, color: "var(--text-muted)" }}>
+              <div>최근 30일 최고점: <b style={{color: "#10b981"}}>${Math.round(historyData.max30).toLocaleString()}</b></div>
+              <div>최근 30일 최저점: <b style={{color: "#ef4444"}}>${Math.round(historyData.min30).toLocaleString()}</b></div>
+            </div>
+          )}
         </div>
       )}
 
