@@ -52,6 +52,9 @@ interface HoldingStatus {
   reasons: string[];
   scores: Record<string, number | null>;
   overall: number | null;
+  priceZones?: {
+    tp1: number; tp2: number; sl: number; observeMin: number; observeMax: number; trendBreak: number;
+  };
 }
 
 interface Holding {
@@ -92,6 +95,7 @@ interface PortfolioData {
     totalProfitLossPct: number;
   };
   portfolioStatus: PortfolioStatus;
+  todayActions?: any[];
   message?: string;
 }
 
@@ -355,6 +359,30 @@ export default function PortfolioPage() {
         <div style={{ padding: "12px 16px", borderRadius: 12, background: "#fff8f8", border: "1px solid #f5c2cc", color: "#d64060", fontSize: 13, marginBottom: 16 }}>⚠️ {error}</div>
       )}
 
+      {/* ═══ 오늘의 액션 (Today's Actions) ═══ */}
+      {portfolio?.todayActions && portfolio.todayActions.length > 0 && (
+        <div style={{ background: "#fff", borderRadius: 16, padding: 16, border: "1px solid #e2e8f0", marginBottom: 20 }}>
+          <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 12, color: "var(--text-primary)" }}>🔥 오늘 챙겨야 할 액션</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {portfolio.todayActions.map((action: any, idx: number) => (
+              <div key={idx} style={{ background: "#f8fafc", padding: "12px 14px", borderRadius: 8, borderLeft: `3px solid ${action.priority === 'HIGH' ? '#e11d48' : action.priority === 'MEDIUM' ? '#f59e0b' : '#3b82f6'}` }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: "#111827", background: "white", padding: "2px 6px", borderRadius: 6, border: "1px solid #cbd5e1" }}>
+                    {action.ticker}
+                  </span>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: action.priority === 'HIGH' ? '#e11d48' : action.priority === 'MEDIUM' ? '#f59e0b' : '#3b82f6' }}>
+                    {action.action}
+                  </span>
+                </div>
+                <div style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                  {action.reason}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ═══ 총 자산 카드 ═══ */}
       {hasHoldings && summary && (
         <div style={{ background: "linear-gradient(135deg, #3d1f2e 0%, #d48aaa 100%)", borderRadius: 16, padding: "20px 24px", color: "#fff", marginBottom: 24, boxShadow: "0 4px 12px rgba(212,138,170,0.2)" }}>
@@ -500,6 +528,34 @@ export default function PortfolioPage() {
                   </div>
                 )}
 
+                {/* 동적 가격 구간 (Price Zones) */}
+                {h.status?.priceZones && (
+                  <div style={{ marginTop: 12, padding: 12, background: "#f8fafc", borderRadius: 8, border: "1px dashed #cbd5e1" }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>🎯 동적 가격 구간 (매매 가이드)</div>
+                    <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+                      <div style={{ flex: "1 1 30%" }}>
+                         <div style={{ fontSize: 10, color: "var(--text-muted)" }}>1차 목표가</div>
+                         <div style={{ fontSize: 13, fontWeight: 700, color: "#10b981" }}>${h.status.priceZones.tp1}</div>
+                      </div>
+                      <div style={{ flex: "1 1 30%" }}>
+                         <div style={{ fontSize: 10, color: "var(--text-muted)" }}>2차 목표가 (Max)</div>
+                         <div style={{ fontSize: 13, fontWeight: 700, color: "#059669" }}>${h.status.priceZones.tp2}</div>
+                      </div>
+                      <div style={{ flex: "1 1 30%" }}>
+                         <div style={{ fontSize: 10, color: "var(--text-muted)" }}>관찰 구간</div>
+                         <div style={{ fontSize: 13, fontWeight: 700, color: "#f59e0b" }}>${h.status.priceZones.observeMin} ~ ${h.status.priceZones.observeMax}</div>
+                      </div>
+                      <div style={{ flex: "1 1 30%" }}>
+                         <div style={{ fontSize: 10, color: "var(--text-muted)" }}>추세 이탈점</div>
+                         <div style={{ fontSize: 13, fontWeight: 700, color: "#ef4444" }}>${h.status.priceZones.trendBreak}</div>
+                      </div>
+                      <div style={{ flex: "1 1 30%" }}>
+                         <div style={{ fontSize: 10, color: "var(--text-muted)" }}>손절가 (SL)</div>
+                         <div style={{ fontSize: 13, fontWeight: 700, color: "#b91c1c" }}>${h.status.priceZones.sl}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {/* 데이터 시점 */}
                 {h.dataAsOf && (
                   <div style={{ fontSize: 9, color: "#94a3b8", marginTop: 6 }}>
