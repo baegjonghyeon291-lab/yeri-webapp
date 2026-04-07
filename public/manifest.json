@@ -2,7 +2,7 @@
   "name": "JH♡YR",
   "short_name": "JH♡YR",
   "description": "AI 투자 어시스턴트 — 예리",
-  "start_url": "/chat",
+  "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#3d1f2e",

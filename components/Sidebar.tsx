@@ -9,6 +9,7 @@ import NotificationDropdown from "@/components/NotificationDropdown";
 const API = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001";
 
 const navItems = [
+  { href: "/",          icon: "🏠", label: "홈 요약" },
   { href: "/chat",      icon: "💬", label: "채팅 분석" },
   { href: "/watchlist", icon: "⭐", label: "관심종목" },
   { href: "/briefing",  icon: "📊", label: "브리핑" },
@@ -58,7 +59,7 @@ export default function Sidebar() {
 
   // ── 공통 nav 아이템 ────────────────────────────────────────────
   const NavItem = ({ item }: { item: typeof navItems[0] }) => {
-    const active      = pathname.startsWith(item.href);
+    const active      = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
     const isWatchlist = item.href === "/watchlist";
 
     // ChatLayout의 position:fixed 레이아웃이 Next.js App Router의

@@ -1,7 +1,7 @@
 // ─── PWA Service Worker ─── Auto-update on every deploy ───
 // CACHE_NAME은 빌드 시 generate-sw-version.js가 자동 교체
 const CACHE_NAME = 'jhyr-2363fdb-1775535083402';
-const SHELL_URLS = ['/chat', '/watchlist', '/briefing', '/portfolio'];
+const SHELL_URLS = ['/', '/chat', '/watchlist', '/briefing', '/portfolio'];
 
 // ── Install: 새 SW 즉시 활성화 ──
 self.addEventListener('install', (event) => {
