@@ -257,6 +257,10 @@ export default function PortfolioPage() {
               </div>
             ))}
           </div>
+          {/* 상태 배지 기준점수 안내문 추가 */}
+          <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px dashed var(--border)", fontSize: 11, color: "var(--text-muted)", lineHeight: 1.6 }}>
+            💡 <b>상태 배지 기준 (종목 종합 점수):</b> 상승우세(75~100) · 보통(55~74) · 주의(40~54) · 경고(25~39) · 리스크 높음(0~24)
+          </div>
           {ps.needCheckTop3.length > 0 && (
             <div style={{ fontSize: 12, color: "#d97706", lineHeight: 1.8 }}>
               ⚠️ 점검 필요: {ps.needCheckTop3.map(r => `${r.ticker}(${r.badge})`).join(", ")}
@@ -282,7 +286,7 @@ export default function PortfolioPage() {
                     </div>
                     <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
                       {h.quantity}주 · 평단 ${h.avgPrice} · 현재 {h.currentPrice != null ? `$${h.currentPrice.toFixed(2)}` : "조회중"}
-                      {h.changePct != null && <span style={{ color: h.changePct >= 0 ? "#10b981" : "#ef4444", marginLeft: 4 }}>({h.changePct >= 0 ? "+" : ""}{h.changePct.toFixed(2)}%)</span>}
+                      {h.changePct != null && <span style={{ color: h.changePct >= 0 ? "#10b981" : "#ef4444", marginLeft: 4 }}>(당일 {h.changePct >= 0 ? "+" : ""}{h.changePct.toFixed(2)}%)</span>}
                     </div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
