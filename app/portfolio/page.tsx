@@ -218,12 +218,45 @@ export default function PortfolioPage() {
       <p style={{ color: "var(--text-secondary)", fontSize: 12, marginBottom: 12 }}>보유 종목을 등록하면 실시간 상태 분석과 전략 참고를 받을 수 있어요</p>
 
       {showGuide && (
-        <div style={{ position: "relative", background: "#f8fafc", borderRadius: 12, border: "1px solid var(--border)", padding: "16px", marginBottom: 20, fontSize: 13, boxShadow: "0 2px 10px rgba(0,0,0,0.03)" }}>
-          <button onClick={() => setShowGuide(false)} style={{ position: "absolute", top: 12, right: 12, background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", fontSize: 14 }}>✕</button>
-          <div style={{ color: "var(--accent)", fontSize: 14, fontWeight: 800 }}>💡 포트폴리오 활용 가이드 (준비 중)</div>
-          <p style={{ marginTop: 8, color: "var(--text-secondary)", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>
-            - 종목 추가 및 관리 방법\n- 배지 단계별 리스크 해석 가이드\n- 수익률과 점수에 따른 동적 전략 등 상세 사용법이 이곳에 채워집니다.
-          </p>
+        <div style={{ position: "relative", background: "#fdf8fa", borderRadius: 12, border: "1px solid #fce7f3", padding: "24px 24px 34px", marginBottom: 20, fontSize: 13, boxShadow: "0 2px 10px rgba(219,39,119,0.05)", maxHeight: "65vh", overflowY: "auto", overscrollBehavior: "contain" }}>
+          <button onClick={() => setShowGuide(false)} style={{ position: "absolute", top: 16, right: 16, background: "rgba(219,39,119,0.1)", border: "none", borderRadius: "50%", width: 28, height: 28, cursor: "pointer", color: "#db2777", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>✕</button>
+          
+          <div style={{ fontWeight: 800, color: "#db2777", fontSize: 15, marginBottom: 16 }}>💖 귀요미 예리를 위한 포트폴리오 설명서 💖</div>
+          
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, color: "var(--text-primary)", lineHeight: 1.6 }}>
+            <p>주식 투자는 생물이라 타이밍이 생명! 내가 산 주식들을 언제 더 사고 언제 이익을 챙겨야 할지, 예리의 AI 엔진이 내 상황에 딱 맞춰서 실시간으로 1:1 과외를 해드립니다. 차근차근 살펴볼까요?</p>
+            
+            <div>
+              <div style={{ fontWeight: 800, color: "#111827", marginBottom: 2 }}>1️⃣ 1번: 내 서랍장에 산 돈이랑 주식 채워 넣기</div>
+              <div style={{ color: "var(--text-secondary)" }}>화면 돋보기 검색창에 내가 산 주식 이름(또는 영어 티커)을 검색해 보세요. 아래에 뜨는 초록색 종목 칩을 톡 누른 다음, 내가 가지고 있는 '주식 수량'과 '내가 산 평균 가격(평단가)'을 적고 아래 <b>추가</b> 버튼을 누르면 포트폴리오에 주식이 쏙 들어옵니다! (서버가 똑똑하게 분석을 감당하기 위해 최대 20개까지만 등록할 수 있어요.)</div>
+            </div>
+
+            <div>
+              <div style={{ fontWeight: 800, color: "#111827", marginBottom: 2 }}>2️⃣ 2번: 건강 검진표! 알록달록 상태 배지 확인하기</div>
+              <div style={{ color: "var(--text-secondary)" }}>주식을 등록해 두면 예리가 재무제표, 사람들의 관심도, 요새 주식 차트를 바탕으로 7가지 깐깐한 X-ray 검사를 해서 5단계의 배지를 척척 달아줍니다!</div>
+              <ul style={{ paddingLeft: 16, margin: "6px 0 0 0", color: "var(--text-secondary)", display: "flex", flexDirection: "column", gap: 4 }}>
+                <li>🟢 <b>상승 우세</b>: 오르는 힘이 아주 튼튼해요! 쭉 들고 가도 좋아요.</li>
+                <li>🟡 <b>보통</b>: 오를지 내릴지 눈치 보며 얌전하게 횡보하고 있어요.</li>
+                <li>🟠 <b>주의 (39점 이하)</b>: 상승하는 힘이 조금 빠지고 있어요.</li>
+                <li>🔴 <b>경고 (29점 이하)</b>: 삐뽀삐뽀! 단기적으로 꽤 아플 수 있어요.</li>
+                <li>🚨 <b>리스크 높음 (19점 이하)</b>: 매우 안 좋습니다! 당장 도망칠 각을 봐야 해요.</li>
+              </ul>
+            </div>
+
+            <div>
+              <div style={{ fontWeight: 800, color: "#111827", marginBottom: 2 }}>3️⃣ 3번: 내 돈 상황에 딱 맞춘 '예리의 특급 전략' 읽기</div>
+              <div style={{ color: "var(--text-secondary)" }}>종목 카드 안쪽을 꼼꼼히 보면 예리가 써준 길쭉한 문장이 있어요. 이 글은 아무렇게나 뜨는 게 아니라, 내가 수익을 보는지 물렸는지 <b>평단가 상황</b>을 파악해서 <span style={{color:"#db2777", fontWeight:600}}>"수익이 크니까 얼른 챙기세요!"</span> 혹은 <span style={{color:"#059669", fontWeight:600}}>"물려있지만 반등 기미가 오니 조금 더 사보세요!"</span> 하고 방향을 1:1로 지도해주는 거랍니다. 제일 중요한 부분이에요!</div>
+            </div>
+
+            <div>
+              <div style={{ fontWeight: 800, color: "#111827", marginBottom: 2 }}>4️⃣ 4번: 맨 윗단 '총 자산과 TOP 요약판' 구경하기</div>
+              <div style={{ color: "var(--text-secondary)" }}>포트폴리오 화면 맨 위쪽 예쁜 그라데이션 박스를 보면 내 주식들의 총 가치가 얼마인지, 합쳐서 플러스인지 마이너스인지 한눈에 탁 보여줍니다. 그리고 스크롤을 좀 더 내리다 보면 예리가 콕 집어 조심하라고 경고하는 '위험 종목 TOP'이나, 알아서 잘 커주고 있는 '착한 상승 종목 TOP'을 따로 모아 친절하게 요약해 줍니다.</div>
+            </div>
+          </div>
+          
+          <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px dashed #fbcfe8", color: "#b81d52", fontWeight: 700, fontSize: 13 }}>
+            💌 포트폴리오 기능을 사용하면서 오류나 추가적인 기능이 필요하다면 예리남편 종현이한테 바로 카톡 보내주세요.
+          </div>
         </div>
       )}
 
