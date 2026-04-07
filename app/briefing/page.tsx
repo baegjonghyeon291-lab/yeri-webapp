@@ -242,7 +242,7 @@ export default function BriefingPage() {
       </div>
       
       {showGuide && (
-        <div style={{ padding: "20px 24px", background: "#fdf8fa", borderBottom: "1px solid #fce7f3", fontSize: 13, color: "var(--text-primary)", lineHeight: 1.6, flexShrink: 0 }}>
+        <div style={{ maxHeight: "65vh", overflowY: "auto", overscrollBehavior: "contain", padding: "24px 24px 34px", background: "#fdf8fa", borderBottom: "1px solid #fce7f3", fontSize: 13, color: "var(--text-primary)", lineHeight: 1.6, flexShrink: 0 }}>
           <div style={{ fontWeight: 800, color: "#db2777", fontSize: 15, marginBottom: 16 }}>💖 귀요미 예리를 위한 브리핑 설명서 💖</div>
           
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
