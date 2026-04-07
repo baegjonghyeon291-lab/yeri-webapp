@@ -16,8 +16,12 @@ interface Alerts {
   priceBelow: number | null;
   takeProfitPct: number | null;
   stopLossPct: number | null;
+  totalValueAbove: number | null;
   maxWeight: number | null;
   badgeChange: boolean;
+  predictEnabled: boolean;
+  predictBreakout: boolean;
+  predictDump: boolean;
 }
 
 const DEFAULT_ALERTS: Alerts = {
@@ -26,8 +30,12 @@ const DEFAULT_ALERTS: Alerts = {
   priceBelow: null,
   takeProfitPct: null,
   stopLossPct: null,
+  totalValueAbove: null,
   maxWeight: null,
-  badgeChange: true
+  badgeChange: true,
+  predictEnabled: false,
+  predictBreakout: false,
+  predictDump: false
 };
 
 interface HoldingStatus {
@@ -520,53 +528,95 @@ export default function PortfolioPage() {
             </button>
             
             {showAlertUI && (
-              <div style={{ padding: "14px", background: "#fdf8fa", border: "1px solid #fce7f3", borderRadius: 8, marginTop: 8, display: "flex", flexDirection: "column", gap: 12 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: "var(--text-primary)" }}>스마트 알림 켜기</span>
-                  <label style={{ display: "flex", alignItems: "center", cursor: "pointer", gap: 8 }}>
-                    <input type="checkbox" checked={newAlerts.enabled} onChange={e => setNewAlerts({...newAlerts, enabled: e.target.checked})} style={{ width: 18, height: 18, accentColor: "#db2777" }} />
-                    <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>활성화</span>
-                  </label>
-                </div>
+              <div style={{ padding: "14px", background: "#fdf8fa", border: "1px solid #fce7f3", borderRadius: 8, marginTop: 8, display: "flex", flexDirection: "column", gap: 16 }}>
                 
+                {/* 1. 조건 도달 알림 섹션 */}
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, paddingBottom: 6, borderBottom: "1px solid rgba(219,39,119,0.1)" }}>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: "var(--text-primary)" }}>🎯 조건 도달 알림 (실제 도달 시)</span>
+                    <label style={{ display: "flex", alignItems: "center", cursor: "pointer", gap: 8 }}>
+                      <input type="checkbox" checked={newAlerts.enabled} onChange={e => setNewAlerts({...newAlerts, enabled: e.target.checked})} style={{ width: 18, height: 18, accentColor: "#db2777" }} />
+                      <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>활성화</span>
+                    </label>
+                  </div>
+                  
+                  {newAlerts.enabled && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                        <div>
+                          <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>📈 수익률 목표 (%)</div>
+                          <input type="number" placeholder="+20" value={newAlerts.takeProfitPct ?? ""} onChange={e => setNewAlerts({...newAlerts, takeProfitPct: e.target.value ? Number(e.target.value) : null})} style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid #fbcfe8", fontSize: 13 }} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>📉 손절 기준 (%)</div>
+                          <input type="number" placeholder="-10" value={newAlerts.stopLossPct ?? ""} onChange={e => setNewAlerts({...newAlerts, stopLossPct: e.target.value ? Number(e.target.value) : null})} style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid #fbcfe8", fontSize: 13 }} />
+                        </div>
+                      </div>
+                      
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                        <div>
+                          <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>🚀 가격 돌파 ($)</div>
+                          <input type="number" placeholder="목표가" value={newAlerts.priceAbove ?? ""} onChange={e => setNewAlerts({...newAlerts, priceAbove: e.target.value ? Number(e.target.value) : null})} style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid #fbcfe8", fontSize: 13 }} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>🔻 가격 이탈 ($)</div>
+                          <input type="number" placeholder="이탈가" value={newAlerts.priceBelow ?? ""} onChange={e => setNewAlerts({...newAlerts, priceBelow: e.target.value ? Number(e.target.value) : null})} style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid #fbcfe8", fontSize: 13 }} />
+                        </div>
+                      </div>
+
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                        <div>
+                          <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>💰 총 평가금액 달성 ($)</div>
+                          <input type="number" placeholder="(수량×단가)" value={newAlerts.totalValueAbove ?? ""} onChange={e => setNewAlerts({...newAlerts, totalValueAbove: e.target.value ? Number(e.target.value) : null})} style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid #fbcfe8", fontSize: 13 }} />
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>⚖️ 비중 초과 경고 (%)</div>
+                          <input type="number" placeholder="30" value={newAlerts.maxWeight ?? ""} onChange={e => setNewAlerts({...newAlerts, maxWeight: e.target.value ? Number(e.target.value) : null})} style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid #fbcfe8", fontSize: 13 }} />
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 8, borderTop: "1px dashed #fce7f3" }}>
+                        <span style={{ fontSize: 12, color: "var(--text-primary)", fontWeight: 600 }}>🚨 배지 악화 시 즉시 알림 (경고/위험)</span>
+                        <input type="checkbox" checked={newAlerts.badgeChange} onChange={e => setNewAlerts({...newAlerts, badgeChange: e.target.checked})} style={{ width: 16, height: 16, accentColor: "#db2777" }} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. AI 예측/사전 경고 섹션 */}
+                <div style={{ background: "rgba(255,255,255,0.6)", borderRadius: 8, padding: "12px", border: "1px solid rgba(219,39,119,0.2)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: "var(--accent)" }}>🔮 AI 예측/사전 경고 (도달 전 조기감지)</span>
+                    <label style={{ display: "flex", alignItems: "center", cursor: "pointer", gap: 8 }}>
+                      <input type="checkbox" checked={newAlerts.predictEnabled} onChange={e => setNewAlerts({...newAlerts, predictEnabled: e.target.checked})} style={{ width: 18, height: 18, accentColor: "var(--accent)" }} />
+                      <span style={{ fontSize: 13, color: "var(--text-muted)" }}>활성화</span>
+                    </label>
+                  </div>
+                  
+                  {newAlerts.predictEnabled && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", cursor: "pointer" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                          <span style={{ fontSize: 12, color: "var(--text-primary)", fontWeight: 600 }}>목표 돌파 가능성 감지 📈</span>
+                          <span style={{ fontSize: 10, color: "var(--text-muted)" }}>차트 상승 모멘텀이 극에 달할 때 미리 경고</span>
+                        </div>
+                        <input type="checkbox" checked={newAlerts.predictBreakout} onChange={e => setNewAlerts({...newAlerts, predictBreakout: e.target.checked})} style={{ width: 16, height: 16, accentColor: "var(--accent)" }} />
+                      </label>
+                      <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", cursor: "pointer" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                          <span style={{ fontSize: 12, color: "var(--text-primary)", fontWeight: 600 }}>하락 변동성 사전 경고 📉</span>
+                          <span style={{ fontSize: 10, color: "var(--text-muted)" }}>추세 붕괴나 경고 단계 진입 낌새가 보일 때</span>
+                        </div>
+                        <input type="checkbox" checked={newAlerts.predictDump} onChange={e => setNewAlerts({...newAlerts, predictDump: e.target.checked})} style={{ width: 16, height: 16, accentColor: "var(--accent)" }} />
+                      </label>
+                    </div>
+                  )}
+                </div>
+
                 {newAlerts.enabled && (
-                  <>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                      <div>
-                        <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>📈 수익률 목표 (%)</div>
-                        <input type="number" placeholder="예: 20" value={newAlerts.takeProfitPct ?? ""} onChange={e => setNewAlerts({...newAlerts, takeProfitPct: e.target.value ? Number(e.target.value) : null})} style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid #fbcfe8", fontSize: 13 }} />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>📉 손절 기준 (%)</div>
-                        <input type="number" placeholder="예: -10" value={newAlerts.stopLossPct ?? ""} onChange={e => setNewAlerts({...newAlerts, stopLossPct: e.target.value ? Number(e.target.value) : null})} style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid #fbcfe8", fontSize: 13 }} />
-                      </div>
-                    </div>
-                    
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                      <div>
-                        <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>🚀 가격 돌파 ($)</div>
-                        <input type="number" placeholder="예: 150" value={newAlerts.priceAbove ?? ""} onChange={e => setNewAlerts({...newAlerts, priceAbove: e.target.value ? Number(e.target.value) : null})} style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid #fbcfe8", fontSize: 13 }} />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>🔻 가격 이탈 ($)</div>
-                        <input type="number" placeholder="예: 90" value={newAlerts.priceBelow ?? ""} onChange={e => setNewAlerts({...newAlerts, priceBelow: e.target.value ? Number(e.target.value) : null})} style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid #fbcfe8", fontSize: 13 }} />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>⚖️ 비중 초과 경고 (%)</div>
-                      <input type="number" placeholder="예: 30" value={newAlerts.maxWeight ?? ""} onChange={e => setNewAlerts({...newAlerts, maxWeight: e.target.value ? Number(e.target.value) : null})} style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid #fbcfe8", fontSize: 13 }} />
-                    </div>
-
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 8, borderTop: "1px dashed #fbcfe8" }}>
-                      <span style={{ fontSize: 12, color: "var(--text-primary)", fontWeight: 600 }}>🚨 배지 악화 시 알림 (경고/위험)</span>
-                      <input type="checkbox" checked={newAlerts.badgeChange} onChange={e => setNewAlerts({...newAlerts, badgeChange: e.target.checked})} style={{ width: 16, height: 16, accentColor: "#db2777" }} />
-                    </div>
-
-                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 4 }}>
-                      <button onClick={() => setNewAlerts({...newAlerts, takeProfitPct: 20, stopLossPct: -10, maxWeight: 30, badgeChange: true})} style={{ padding: "6px 10px", fontSize: 11, fontWeight: 700, borderRadius: 12, background: "#fce7f3", color: "#be123c", border: "none", cursor: "pointer" }}>💡 추천값 자동 채우기 (+20/-10/비중30%)</button>
-                    </div>
-                  </>
+                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 4 }}>
+                    <button onClick={() => setNewAlerts({...newAlerts, takeProfitPct: 20, stopLossPct: -10, maxWeight: 30, badgeChange: true, predictEnabled: true, predictDump: true, predictBreakout: true})} style={{ padding: "6px 10px", fontSize: 11, fontWeight: 700, borderRadius: 12, background: "#fce7f3", color: "#be123c", border: "none", cursor: "pointer" }}>💡 예리의 풀패키지 추천값 채우기</button>
+                  </div>
                 )}
               </div>
             )}
