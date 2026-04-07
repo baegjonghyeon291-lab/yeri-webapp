@@ -14,6 +14,7 @@ const navItems = [
   { href: "/watchlist", icon: "⭐", label: "관심종목" },
   { href: "/briefing",  icon: "📊", label: "브리핑" },
   { href: "/portfolio", icon: "🗂️", label: "포트폴리오" },
+  { href: "/settings",  icon: "⚙️", label: "설정" },
 ];
 
 export default function Sidebar() {
