@@ -63,15 +63,32 @@ export default function UpdatePrompt() {
 
     async function checkVersion() {
       try {
+        // 프론트엔드 버전 체크
         const url = `${window.location.origin}/version.json?_=${Date.now()}&r=${Math.random()}`;
         const res = await fetch(url, {
           cache: "no-store",
           headers: { "Cache-Control": "no-cache, no-store", "Pragma": "no-cache" },
         });
         const data = await res.json();
-        const isStale = data.version
+        let isStale = data.version
           && data.version !== "__BUILD_VERSION__"
           && !data.version.includes(currentBuild);
+
+        // 백엔드 버전 체크 (API 서버 코드 갱신 시 프론트엔드 UI도 강제 갱신 알람 띄우기)
+        try {
+          const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "https://yeri-project.onrender.com";
+          const apiRes = await fetch(`${baseUrl}/api/version`, { cache: "no-store" });
+          const apiData = await apiRes.json();
+          const currentApi = apiData.commitHash?.substring(0, 7);
+          const lastApi = localStorage.getItem("yeri-api-version");
+          
+          if (currentApi) {
+            if (lastApi && lastApi !== currentApi) {
+              isStale = true; // 서버 버전이 바뀌면 업데이트 알람 대상
+            }
+            localStorage.setItem("yeri-api-version", currentApi);
+          }
+        } catch { /* 백엔드 확인 실패 무시 */ }
 
         if (isStale) {
           setNeedsUpdate(true);

@@ -55,32 +55,50 @@ export default function WatchlistPage() {
   }, [sessionId]);
 
   async function load() {
+    if (!sessionId) return;
     try {
-      const saved = localStorage.getItem("yeri_watchlist");
-      let lsList: any[] = [];
-      if (saved) {
-        try { lsList = JSON.parse(saved); } catch {}
-      }
-      const tickers = lsList.map(item => typeof item === "string" ? item : item.ticker);
-      setList(tickers);
+      // 1차: 서버(Single Source of Truth)에서 관심종목 로드
+      const res = await fetch(`${API}/api/watchlist/${sessionId}`);
+      const data = await res.json();
+      const serverList: string[] = data.list || [];
+      const s = data.style;
+      setStyle(STYLES.includes(s) ? s : "스윙");
 
-      if (sessionId) {
-        const res = await fetch(`${API}/api/watchlist/${sessionId}`);
-        const data = await res.json();
-        const s = data.style;
-        setStyle(STYLES.includes(s) ? s : "스윙");
-        
-        // 알림 엔진 작동을 위해 백엔드 세션과 로컬 리스트 동기화
-        tickers.forEach(t => {
-          fetch(`${API}/api/watchlist/${sessionId}/add`, {
-            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticker: t })
-          }).catch(() => {});
-        });
+      // localStorage에만 있고 서버에 없는 종목을 서버로 동기화
+      const saved = localStorage.getItem("yeri_watchlist");
+      let localTickers: string[] = [];
+      if (saved) {
+        try {
+          const lsList = JSON.parse(saved);
+          localTickers = lsList.map((item: any) => typeof item === "string" ? item : item.ticker).filter(Boolean);
+        } catch {}
       }
-    } catch { /* API 미연결 시 무시 */ }
+      const missing = localTickers.filter(t => !serverList.includes(t));
+      for (const t of missing) {
+        try {
+          await fetch(`${API}/api/watchlist/${sessionId}/add`, {
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticker: t })
+          });
+          serverList.push(t);
+        } catch {}
+      }
+
+      // 서버 리스트를 UI + localStorage에 동기화
+      setList(serverList);
+      localStorage.setItem("yeri_watchlist", JSON.stringify(serverList.map(t => ({ ticker: t, addedAt: Date.now() }))));
+    } catch {
+      // 서버 미연결 시 localStorage fallback
+      const saved = localStorage.getItem("yeri_watchlist");
+      if (saved) {
+        try {
+          const lsList = JSON.parse(saved);
+          setList(lsList.map((item: any) => typeof item === "string" ? item : item.ticker).filter(Boolean));
+        } catch {}
+      }
+    }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { if (sessionId) load(); }, [sessionId]);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -92,53 +110,54 @@ export default function WatchlistPage() {
     setLoading(true);
     const ticker = input.trim().toUpperCase();
     try {
-      const saved = localStorage.getItem("yeri_watchlist");
-      const lsList = saved ? JSON.parse(saved) : [];
-      if (!lsList.some((item: any) => (item.ticker || item) === ticker)) {
-        if (lsList.length >= 20) {
-          showToast("⚠️ 최대 개수 초과 (20개)");
-          return;
-        }
-        lsList.push({ ticker, name: ticker, addedAt: Date.now() });
-        localStorage.setItem("yeri_watchlist", JSON.stringify(lsList));
-        setList(lsList.map((i: any) => i.ticker || i));
-        showToast("✅ 추가 완료!");
-        
-        // 백엔드 세션 동기화 (Background)
-        fetch(`${API}/api/watchlist/${sessionId}/add`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ticker }),
-        }).catch(()=>{});
-        
-        // 즉시 스캔
-        fetchAlerts(true);
-      } else {
+      if (list.includes(ticker)) {
         showToast("이미 등록된 종목");
+        setInput("");
+        return;
       }
+      if (list.length >= 20) {
+        showToast("⚠️ 최대 개수 초과 (20개)");
+        return;
+      }
+
+      // 서버에 먼저 추가 (await) → 성공 시 UI/localStorage 반영
+      const res = await fetch(`${API}/api/watchlist/${sessionId}/add`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ticker }),
+      });
+      const data = await res.json();
+      const newList = data.list || [...list, ticker];
+      setList(newList);
+      localStorage.setItem("yeri_watchlist", JSON.stringify(newList.map((t: string) => ({ ticker: t, addedAt: Date.now() }))));
+      showToast("✅ 추가 완료!");
       setInput("");
+
+      // 즉시 스캔
+      fetchAlerts(true);
     } catch (e) {
-      showToast("추가 실패");
+      showToast("⚠️ 서버 연결 실패 — 추가되지 않았습니다");
     } finally { setLoading(false); }
   }
 
   async function remove(ticker: string) {
-    const saved = localStorage.getItem("yeri_watchlist");
-    if (saved) {
-      try {
-        const lsList = JSON.parse(saved);
-        const filtered = lsList.filter((item: any) => (item.ticker || item) !== ticker);
-        localStorage.setItem("yeri_watchlist", JSON.stringify(filtered));
-        setList(filtered.map((i: any) => i.ticker || i));
-      } catch {}
+    try {
+      // 서버에서 먼저 삭제 (await) → 성공 시 UI/localStorage 반영
+      const res = await fetch(`${API}/api/watchlist/${sessionId}/remove`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ticker }),
+      });
+      const data = await res.json();
+      const newList = data.list || list.filter(t => t !== ticker);
+      setList(newList);
+      localStorage.setItem("yeri_watchlist", JSON.stringify(newList.map((t: string) => ({ ticker: t, addedAt: Date.now() }))));
+    } catch {
+      // 서버 실패 시에도 UI에서는 제거
+      const newList = list.filter(t => t !== ticker);
+      setList(newList);
+      localStorage.setItem("yeri_watchlist", JSON.stringify(newList.map((t: string) => ({ ticker: t, addedAt: Date.now() }))));
     }
-    
-    // 백엔드 세션 동기화
-    fetch(`${API}/api/watchlist/${sessionId}/remove`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ticker }),
-    }).catch(()=>{});
   }
 
   async function changeStyle(s: Style) {

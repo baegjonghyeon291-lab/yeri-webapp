@@ -196,14 +196,25 @@ export default function BriefingPage() {
   }
 
   async function fetchWatchlist() {
+    if (watchlist.length === 0) {
+      setError("관심종목이 없습니다. 관심종목 페이지에서 종목을 먼저 추가해주세요.");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
       const res = await fetch(`${API}/api/briefing/${sessionId}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error);
+      if (data.empty) {
+        setError(data.message || "관심종목이 없습니다. 먼저 관심종목을 추가해주세요.");
+        return;
+      }
       setWatchlistReport(data.report || "");
       setWatchlist(data.list || []);
+      if (!data.report) {
+        setError("브리핑 데이터를 받았지만 보고서가 비어 있습니다. 잠시 후 다시 시도해주세요.");
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "알 수 없는 오류");
     } finally {
