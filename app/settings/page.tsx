@@ -10,6 +10,7 @@ interface Settings {
   briefingTime: string;
   briefingEnabled: boolean;
   alertEnabled: boolean;
+  mode: string;
 }
 
 export default function SettingsPage() {
@@ -109,6 +110,24 @@ export default function SettingsPage() {
                   <span style={{ position: "absolute", content: '""', height: 18, width: 18, left: settings.alertEnabled ? 22 : 3, bottom: 3, backgroundColor: "white", transition: ".3s", borderRadius: "50%" }}></span>
                 </span>
               </label>
+            </div>
+          </div>
+
+          {/* 초보자/고급자 모드 설정 */}
+          <div style={{ background: "#fff", borderRadius: 16, padding: 20, marginBottom: 24, border: "1px solid var(--border)", boxShadow: "0 2px 10px rgba(0,0,0,0.02)" }}>
+             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ flex: 1, paddingRight: 10 }}>
+                <div style={{ fontSize: 15, fontWeight: 800, color: "#111827" }}>지표/전략 표시 모드</div>
+                <div style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4 }}>포트폴리오 화면에서 보여지는 데이터와 설명의 난이도를 설정합니다.</div>
+              </div>
+              <select 
+                value={settings.mode || 'advanced'}
+                onChange={e => setSettings({...settings, mode: e.target.value})}
+                style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)", fontSize: 14, background: "#f8fafc", fontFamily: "inherit", fontWeight: 700 }}
+              >
+                <option value="beginner">🌱 초보자 (핵심만)</option>
+                <option value="advanced">🔥 고급자 (전문 지표)</option>
+              </select>
             </div>
           </div>
 

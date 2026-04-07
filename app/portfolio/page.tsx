@@ -83,6 +83,11 @@ interface Holding {
   weight: number | null;
   status: HoldingStatus | null;
   dataAsOf?: string;
+  dividend?: {
+    yield: number | null;
+    rate: number | null;
+    exDate: string | null;
+  };
 }
 
 interface PortfolioStatus {
@@ -103,6 +108,8 @@ interface PortfolioData {
     totalValue: number;
     totalProfitLoss: number;
     totalProfitLossPct: number;
+    totalAnnualDividend?: number;
+    dividendYieldPct?: number;
   };
   portfolioStatus: PortfolioStatus;
   todayActions?: any[];
@@ -116,6 +123,7 @@ interface PortfolioData {
     themes: { name: string; weight: number }[];
     avgBeta: number;
   };
+  userMode?: string;
 }
 
 interface HistoryComparison {
@@ -155,6 +163,10 @@ export default function PortfolioPage() {
   const [briefing, setBriefing] = useState("");
   const [briefingLoading, setBriefingLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const [compareModalOpen, setCompareModalOpen] = useState(false);
+  const [compareT1, setCompareT1] = useState("");
+  const [compareT2, setCompareT2] = useState("");
 
   // ── 종목 추가 폼 ──
   const [newTicker, setNewTicker] = useState("");
@@ -439,6 +451,31 @@ export default function PortfolioPage() {
               </div>
               <div style={{ marginTop: 8, fontSize: 12, color: "#c2410c", fontWeight: 600 }}>💡 둘 다 동시에 설정할 수 있으니, 원하는 조건을 마음껏 걸어두세요!</div>
             </div>
+
+            <div>
+              <div style={{ fontWeight: 800, color: "#111827", marginBottom: 2 }}>6️⃣ 6번: VS 종목 대결하기</div>
+              <div style={{ color: "var(--text-secondary)" }}>종목 목록 위쪽에 있는 '🆚 종목 비교' 버튼을 누르면, 내가 산 주식 두 개를 골라서 <b>수익률, 상태 배지, 재무 점수, 모멘텀</b> 등을 나란히 놓고 비교할 수 있어요. 어떤 주식을 더 살지 고민될 때 써보세요!</div>
+            </div>
+
+            <div>
+              <div style={{ fontWeight: 800, color: "#111827", marginBottom: 2 }}>7️⃣ 7번: 📈 시간 여행! 히스토리 트래킹</div>
+              <div style={{ color: "var(--text-secondary)" }}>맨 위 박스 바로 밑에 있는 '자산 흐름 리포트'에서 내 주식이 <b>어제부터, 1주일 전부터, 한 달 전부터</b> 얼마나 올랐는지 바로 파악할 수 있어요.</div>
+            </div>
+
+            <div>
+              <div style={{ fontWeight: 800, color: "#111827", marginBottom: 2 }}>8️⃣ 8번: 📅 쏠쏠한 배당금 관리</div>
+              <div style={{ color: "var(--text-secondary)" }}>내 주식이 배당금을 준다면, 연간 기대 배당률을 계산해드려요! 맨 위 박스에서는 총 배당금을 확인하고, <b>다가오는 배당 캘린더</b>를 통해 배당락일이 다가오는지 미리 체크할 수 있답니다.</div>
+            </div>
+
+            <div>
+              <div style={{ fontWeight: 800, color: "#111827", marginBottom: 2 }}>9️⃣ 9번: 🛡️ 계란 나누어 담기! 포트폴리오 디펜스</div>
+              <div style={{ color: "var(--text-secondary)" }}>내 주식들이 한 테마에만 너무 쏠려 있지 않은지, 시장이 흔들릴 때 방어가 될지 예리가 <b>100점 만점으로 계산</b>해서 알려주고 팁을 드립니다.</div>
+            </div>
+
+            <div>
+              <div style={{ fontWeight: 800, color: "#111827", marginBottom: 2 }}>🔟 10번: 🌱 복잡한 게 싫다면 초보자 모드</div>
+              <div style={{ color: "var(--text-secondary)" }}>숫자나 지표가 너무 많아 어지럽다면? 왼쪽 메뉴의 '설정'에서 <b>초보자 모드</b>를 켜시면 예리가 심플하게 핵심 요약만 보여드립니다.</div>
+            </div>
           </div>
           
           <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px dashed #fbcfe8", color: "#b81d52", fontWeight: 700, fontSize: 13 }}>
@@ -449,6 +486,12 @@ export default function PortfolioPage() {
 
       {error && (
         <div style={{ padding: "12px 16px", borderRadius: 12, background: "#fff8f8", border: "1px solid #f5c2cc", color: "#d64060", fontSize: 13, marginBottom: 16 }}>⚠️ {error}</div>
+      )}
+
+      {portfolio?.userMode === 'beginner' && (
+        <div style={{ background: "#ecfdf5", borderRadius: 12, padding: "12px 16px", border: "1px solid #a7f3d0", color: "#065f46", fontSize: 13, fontWeight: 700, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+          <span>🌱</span> 초보자 모드가 켜져 있습니다. 복잡한 지표는 숨기고 핵심만 간편하게 보여드려요! (설정에서 변경 가능)
+        </div>
       )}
 
       {/* ═══ 오늘의 액션 (Today's Actions) ═══ */}
@@ -480,7 +523,7 @@ export default function PortfolioPage() {
         <div style={{ background: "linear-gradient(135deg, #3d1f2e 0%, #d48aaa 100%)", borderRadius: 16, padding: "20px 24px", color: "#fff", marginBottom: 24, boxShadow: "0 4px 12px rgba(212,138,170,0.2)" }}>
           <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>총 자산 가치</div>
           <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 12 }}>${summary.totalValue.toLocaleString()}</div>
-          <div style={{ display: "flex", gap: 16 }}>
+          <div style={{ display: "flex", gap: 16, flexWrap: "wrap", rowGap: 12 }}>
             <div>
               <div style={{ fontSize: 11, opacity: 0.7 }}>총 손익</div>
               <div style={{ fontSize: 15, fontWeight: 700, color: summary.totalProfitLoss >= 0 ? "#4ade80" : "#fb7185" }}>
@@ -493,6 +536,14 @@ export default function PortfolioPage() {
                 {summary.totalProfitLossPct >= 0 ? "+" : ""}{summary.totalProfitLossPct}%
               </div>
             </div>
+            {(summary.totalAnnualDividend || 0) > 0 && (
+              <div>
+                <div style={{ fontSize: 11, opacity: 0.7 }}>연 예상 배당금 (추정)</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "#fef08a" }}>
+                  ${Math.round(summary.totalAnnualDividend!)} ({summary.dividendYieldPct || 0}%)
+                </div>
+              </div>
+            )}
             <div>
               <div style={{ fontSize: 11, opacity: 0.7 }}>종목 수</div>
               <div style={{ fontSize: 15, fontWeight: 700 }}>{summary.holdingCount}개</div>
@@ -582,13 +633,15 @@ export default function PortfolioPage() {
               ))}
               {portfolio.diversification.sectors.length === 0 && <div style={{ fontSize: 11, color: "var(--text-muted)" }}>데이터 없음</div>}
             </div>
-            <div style={{ flex: 1, minWidth: "140px", background: "#f8fafc", padding: "10px", borderRadius: 8 }}>
-              <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 6 }}>🌊 포트폴리오 변동성 (Beta)</div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: portfolio.diversification.avgBeta > 1.5 ? "#ef4444" : portfolio.diversification.avgBeta < 0.8 ? "#10b981" : "var(--text-primary)" }}>
-                {portfolio.diversification.avgBeta.toFixed(2)}
+            {portfolio?.userMode !== 'beginner' && (
+              <div style={{ flex: 1, minWidth: "140px", background: "#f8fafc", padding: "10px", borderRadius: 8 }}>
+                <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 6 }}>🌊 포트폴리오 변동성 (Beta)</div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: portfolio.diversification.avgBeta > 1.5 ? "#ef4444" : portfolio.diversification.avgBeta < 0.8 ? "#10b981" : "var(--text-primary)" }}>
+                  {portfolio.diversification.avgBeta.toFixed(2)}
+                </div>
+                <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 4 }}>※ 1.0 = 시장 평균 변동성</div>
               </div>
-              <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 4 }}>※ 1.0 = 시장 평균 변동성</div>
-            </div>
+            )}
           </div>
 
           {portfolio.diversification.messages.length > 0 && (
@@ -601,12 +654,47 @@ export default function PortfolioPage() {
         </div>
       )}
 
+      {/* ═══ 다가오는 배당일 ═══ */}
+      {hasHoldings && Math.max(...holdings.map(h => (h.dividend?.rate || 0))) > 0 && (
+        <div style={{ background: "#fff", borderRadius: 16, padding: 16, border: "1px solid var(--border)", marginBottom: 20 }}>
+          <div style={{ fontSize: 14, fontWeight: 800, color: "var(--text-primary)", marginBottom: 12 }}>📅 배당 캘린더 (배당락일 기준)</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {holdings
+              .filter(h => h.dividend?.exDate)
+              .sort((a, b) => new Date(a.dividend!.exDate!).getTime() - new Date(b.dividend!.exDate!).getTime())
+              .map(h => (
+                <div key={`div-${h.ticker}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: "#fcf8eb", borderRadius: 8, borderLeft: "3px solid #facc15" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: "#111827" }}>{h.ticker}</span>
+                    <span style={{ fontSize: 11, color: "var(--text-secondary)", background: "#fff", padding: "2px 6px", borderRadius: 4 }}>{h.dividend!.exDate}</span>
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: "#ca8a04" }}>${h.dividend!.rate} (연)</div>
+                </div>
+            ))}
+            {holdings.filter(h => h.dividend?.exDate).length === 0 && (
+              <div style={{ fontSize: 12, color: "var(--text-muted)" }}>예정된 최신 배당락일 정보가 표기되지 않았습니다.</div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ═══ 종목별 카드 영역 헤더 ═══ */}
+      {hasHoldings && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <div style={{ fontSize: 16, fontWeight: 800, color: "var(--text-primary)" }}>내 보유 종목</div>
+          <button onClick={() => setCompareModalOpen(true)} style={{ background: "#334155", color: "white", padding: "8px 12px", borderRadius: 8, fontSize: 12, fontWeight: 700, border: "none", display: "flex", alignItems: "center", gap: 6, cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
+            <span>🆚</span> 종목 비교
+          </button>
+        </div>
+      )}
+
       {/* ═══ 종목별 카드 ═══ */}
       {hasHoldings && (
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
           {holdings.map(h => {
             const bs = h.status ? getBadgeStyle(h.status.badge) : null;
             const plSign = (h.profitLoss ?? 0) >= 0 ? "+" : "";
+            const isBeginner = portfolio?.userMode === 'beginner';
             return (
               <div key={h.ticker} style={{ background: "#fff", borderRadius: 16, padding: 16, border: `1px solid ${bs ? bs.border : "var(--border)"}`, boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
                 {/* 상단: 종목명 + 배지 */}
@@ -631,8 +719,8 @@ export default function PortfolioPage() {
                   </div>
                 </div>
 
-                {/* 수익률 */}
-                <div style={{ display: "flex", gap: 16, marginBottom: 10 }}>
+                {/* 수익률 & 배당금 */}
+                <div style={{ display: "flex", gap: 16, marginBottom: 10, flexWrap: "wrap", rowGap: 8 }}>
                   <div>
                     <div style={{ fontSize: 10, color: "var(--text-muted)" }}>평가손익</div>
                     <div style={{ fontSize: 15, fontWeight: 800, color: (h.profitLoss ?? 0) >= 0 ? "#10b981" : "#ef4444" }}>
@@ -649,6 +737,14 @@ export default function PortfolioPage() {
                     <div style={{ fontSize: 10, color: "var(--text-muted)" }}>비중</div>
                     <div style={{ fontSize: 15, fontWeight: 700 }}>{h.weight ?? "-"}%</div>
                   </div>
+                  {(h.dividend?.rate || 0) > 0 && (
+                    <div style={{ paddingLeft: 12, borderLeft: "1px solid var(--border)" }}>
+                      <div style={{ fontSize: 10, color: "var(--text-muted)" }}>배당 (수익률)</div>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: "#ca8a04" }}>
+                        ${h.dividend!.rate} ({h.dividend!.yield ? (h.dividend!.yield * 100).toFixed(2) : (((h.dividend!.rate || 0) / (h.currentPrice || 1)) * 100).toFixed(2)}%)
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* 전략 문구 + 이유 */}
@@ -668,7 +764,7 @@ export default function PortfolioPage() {
                 )}
 
                 {/* 7팩터 점수 바 */}
-                {h.status?.scores && (
+                {!isBeginner && h.status?.scores && (
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 6 }}>
                     {[
                       { key: "trend", label: "추세" },
@@ -693,7 +789,7 @@ export default function PortfolioPage() {
                 )}
 
                 {/* 동적 가격 구간 (Price Zones) */}
-                {h.status?.priceZones && (
+                {!isBeginner && h.status?.priceZones && (
                   <div style={{ marginTop: 12, padding: 12, background: "#f8fafc", borderRadius: 8, border: "1px dashed #cbd5e1" }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8 }}>🎯 동적 가격 구간 (매매 가이드)</div>
                     <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
@@ -1059,6 +1155,100 @@ export default function PortfolioPage() {
           </button>
         </div>
       )}
+
+      {/* ═══ 종목 비교 모달 ═══ */}
+      {compareModalOpen && portfolio && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div style={{ background: "#fff", width: "100%", maxWidth: 640, borderRadius: 20, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 10px 40px rgba(0,0,0,0.2)", position: "relative" }}>
+            
+            {/* Header */}
+            <div style={{ position: "sticky", top: 0, background: "#fff", zIndex: 10, padding: "20px 24px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "var(--text-primary)" }}>🆚 종목 비교</div>
+              <button onClick={() => { setCompareModalOpen(false); setCompareT1(""); setCompareT2(""); }} style={{ background: "none", border: "none", fontSize: 24, cursor: "pointer", color: "var(--text-muted)" }}>✕</button>
+            </div>
+
+            {/* Content */}
+            <div style={{ padding: "20px 24px" }}>
+              {/* Selectors */}
+              <div style={{ display: "flex", gap: 16, marginBottom: 24 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", marginBottom: 6 }}>종목 1 선택</div>
+                  <select value={compareT1} onChange={e => setCompareT1(e.target.value)} style={{ width: "100%", padding: "12px", borderRadius: 8, border: "1px solid var(--border)", background: "#f8fafc", fontSize: 14 }}>
+                    <option value="">선택하세요</option>
+                    {portfolio.holdings.map(h => <option key={`t1-${h.ticker}`} value={h.ticker}>{h.ticker} ({h.name})</option>)}
+                  </select>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", marginBottom: 6 }}>종목 2 선택</div>
+                  <select value={compareT2} onChange={e => setCompareT2(e.target.value)} style={{ width: "100%", padding: "12px", borderRadius: 8, border: "1px solid var(--border)", background: "#f8fafc", fontSize: 14 }}>
+                    <option value="">선택하세요</option>
+                    {portfolio.holdings.map(h => <option key={`t2-${h.ticker}`} value={h.ticker}>{h.ticker} ({h.name})</option>)}
+                  </select>
+                </div>
+              </div>
+
+              {/* Comparison Table */}
+              {compareT1 && compareT2 && compareT1 !== compareT2 ? (() => {
+                const h1 = portfolio.holdings.find(h => h.ticker === compareT1);
+                const h2 = portfolio.holdings.find(h => h.ticker === compareT2);
+                if (!h1 || !h2) return null;
+
+                const makeRow = (label: string, v1: any, v2: any, isWinner1: boolean, isWinner2: boolean) => (
+                  <div style={{ display: "grid", gridTemplateColumns: "100px 1fr 1fr", gap: 12, padding: "12px 0", borderBottom: "1px solid #f1f5f9" }}>
+                    <div style={{ fontSize: 12, color: "var(--text-secondary)", fontWeight: 600, alignSelf: "center", lineHeight: 1.2 }}>{label}</div>
+                    <div style={{ fontSize: 13, background: isWinner1 ? "#eff6ff" : "transparent", color: isWinner1 ? "#1d4ed8" : "var(--text-primary)", fontWeight: isWinner1 ? 800 : 500, padding: "8px", borderRadius: 6, textAlign: "center" }}>{v1}</div>
+                    <div style={{ fontSize: 13, background: isWinner2 ? "#eff6ff" : "transparent", color: isWinner2 ? "#1d4ed8" : "var(--text-primary)", fontWeight: isWinner2 ? 800 : 500, padding: "8px", borderRadius: 6, textAlign: "center" }}>{v2}</div>
+                  </div>
+                );
+
+                return (
+                  <div>
+                    {/* Headers */}
+                    <div style={{ display: "grid", gridTemplateColumns: "100px 1fr 1fr", gap: 12, paddingBottom: 12, borderBottom: "2px solid var(--border)", textAlign: "center" }}>
+                      <div></div>
+                      <div style={{ fontSize: 18, fontWeight: 800 }}>{h1.ticker}</div>
+                      <div style={{ fontSize: 18, fontWeight: 800 }}>{h2.ticker}</div>
+                    </div>
+
+                    {/* Data */}
+                    <div style={{ marginTop: 12 }}>
+                      {makeRow("현재가", `$${h1.currentPrice}`, `$${h2.currentPrice}`, false, false)}
+                      {makeRow("당일 등락", `${h1.changePct}%`, `${h2.changePct}%`, (h1.changePct||0) > (h2.changePct||0), (h2.changePct||0) > (h1.changePct||0))}
+                      {makeRow("평가 손익(%)", `${h1.profitLossPct}%`, `${h2.profitLossPct}%`, (h1.profitLossPct||0) > (h2.profitLossPct||0), (h2.profitLossPct||0) > (h1.profitLossPct||0))}
+                      {makeRow("포트폴리오 비중", `${h1.weight ?? 0}%`, `${h2.weight ?? 0}%`, false, false)}
+                      {makeRow("종합 건강도", h1.status?.overall ? `${h1.status.overall}점` : "-", h2.status?.overall ? `${h2.status.overall}점` : "-", (h1.status?.overall||0) > (h2.status?.overall||0), (h2.status?.overall||0) > (h1.status?.overall||0))}
+                      {makeRow("상태 배지", h1.status?.badge || "-", h2.status?.badge || "-", h1.status?.badge === '상승우세', h2.status?.badge === '상승우세')}
+                      {makeRow("모멘텀 점수", h1.status?.scores?.momentum, h2.status?.scores?.momentum, (h1.status?.scores?.momentum||0) > (h2.status?.scores?.momentum||0), (h2.status?.scores?.momentum||0) > (h1.status?.scores?.momentum||0))}
+                      {makeRow("재무/펀더멘탈", h1.status?.scores?.financial, h2.status?.scores?.financial, (h1.status?.scores?.financial||0) > (h2.status?.scores?.financial||0), (h2.status?.scores?.financial||0) > (h1.status?.scores?.financial||0))}
+                    </div>
+
+                    {/* Strategy compare */}
+                    <div style={{ marginTop: 20, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                      <div style={{ background: "#f8fafc", padding: "12px", borderRadius: 8, fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.6 }}>
+                        <div style={{ fontWeight: 800, color: "#111827", marginBottom: 6 }}>💡 {h1.ticker} 전략 요약</div>
+                        {h1.status?.strategy || "데이터 없음"}
+                      </div>
+                      <div style={{ background: "#f8fafc", padding: "12px", borderRadius: 8, fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.6 }}>
+                        <div style={{ fontWeight: 800, color: "#111827", marginBottom: 6 }}>💡 {h2.ticker} 전략 요약</div>
+                        {h2.status?.strategy || "데이터 없음"}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })() : compareT1 && compareT2 && compareT1 === compareT2 ? (
+                 <div style={{ textAlign: "center", padding: "40px 20px", color: "#ef4444", fontSize: 13, background: "#fef2f2", borderRadius: 12, border: "1px solid #fca5a5" }}>
+                  서로 다른 두 종목을 선택해주세요.
+                </div>
+              ) : (
+                <div style={{ textAlign: "center", padding: "40px 20px", color: "var(--text-muted)", fontSize: 13, background: "#f8fafc", borderRadius: 12, border: "1px dashed #cbd5e1" }}>
+                  비교할 두 종목을 위에서 선택해주세요.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
