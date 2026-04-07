@@ -89,6 +89,8 @@ export default function PortfolioPage() {
   const [newPrice, setNewPrice] = useState<number>(0);
   const [newBuyDate, setNewBuyDate] = useState("");
   const [newMemo, setNewMemo] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isConfirmedSuggestion, setIsConfirmedSuggestion] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -124,7 +126,10 @@ export default function PortfolioPage() {
   }, []);
 
   function handleTickerChange(val: string) {
+    setSearchQuery(val);
     setNewTicker(val.toUpperCase());
+    setNewName(val);
+    setIsConfirmedSuggestion(false);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => fetchSuggestions(val), 300);
   }
@@ -132,6 +137,8 @@ export default function PortfolioPage() {
   function selectSuggestion(sug: Suggestion) {
     setNewTicker(sug.ticker);
     setNewName(sug.name);
+    setSearchQuery("");
+    setIsConfirmedSuggestion(true);
     setSuggestions([]);
   }
 
@@ -155,7 +162,8 @@ export default function PortfolioPage() {
         return;
       }
       // 초기화 & 재로드
-      setNewTicker(""); setNewName(""); setNewQty(0); setNewPrice(0);
+      setNewTicker(""); setNewName(""); setSearchQuery(""); setIsConfirmedSuggestion(false);
+      setNewQty(0); setNewPrice(0);
       setNewBuyDate(""); setNewMemo(""); setAddMode(false);
       await loadPortfolio();
     } catch (e: any) { setError(e.message); }
@@ -364,28 +372,40 @@ export default function PortfolioPage() {
       {addMode ? (
         <div style={{ background: "#fff", borderRadius: 16, padding: 20, border: "1px solid var(--border)", marginBottom: 20 }}>
           <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 12 }}>📌 종목 추가</div>
-          <div style={{ display: "flex", gap: 8, marginBottom: 10, position: "relative" }}>
-            <div style={{ position: "relative", flex: 1 }}>
-              <input value={newTicker} onChange={e => handleTickerChange(e.target.value)}
-                onBlur={() => setTimeout(() => setSuggestions([]), 200)}
-                placeholder="티커 (예: NVDA)" autoComplete="off"
-                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, background: "#f5f7fa", border: "1px solid var(--border)", fontSize: 13, fontWeight: 700 }} />
-              {suggestions.length > 0 && (
-                <div style={{ position: "absolute", top: "100%", left: 0, right: 0, zIndex: 100, background: "#fff", borderRadius: 8, border: "1px solid var(--border)", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", marginTop: 4 }}>
-                  {suggestions.map((sug, i) => (
-                    <div key={i} onMouseDown={() => selectSuggestion(sug)}
-                      style={{ padding: "8px 12px", cursor: "pointer", fontSize: 12, borderBottom: i < suggestions.length - 1 ? "1px solid #f3f4f6" : "none", display: "flex", justifyContent: "space-between" }}
-                      onMouseOver={e => { (e.currentTarget as HTMLDivElement).style.background = "#f8fafc"; }}
-                      onMouseOut={e => { (e.currentTarget as HTMLDivElement).style.background = "#fff"; }}>
-                      <span style={{ fontWeight: 700 }}>{sug.ticker}</span>
-                      <span style={{ color: "var(--text-muted)" }}>{sug.name}</span>
-                    </div>
-                  ))}
+          <div style={{ marginBottom: 12 }}>
+            {isConfirmedSuggestion && newTicker ? (
+              <div style={{ padding: "14px", background: "#edf9f0", border: "1px solid #c8efd8", borderRadius: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  <span style={{ fontWeight: 800, color: "#16a34a", fontSize: 16 }}>✅ {newTicker}</span>
+                  <span style={{ fontSize: 12, color: "#2ea85a", fontWeight: 600 }}>{newName}</span>
                 </div>
-              )}
-            </div>
-            <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="종목명 (자동)"
-              style={{ flex: 1, padding: "10px 12px", borderRadius: 8, background: "#f5f7fa", border: "1px solid var(--border)", fontSize: 13 }} />
+                <button onClick={() => { setIsConfirmedSuggestion(false); setNewTicker(""); setNewName(""); setSearchQuery(""); }} 
+                  style={{ background: "none", border: "none", color: "#16a34a", cursor: "pointer", padding: "8px", fontWeight: 700, fontSize: 13 }}>
+                  ✕ 다시 검색
+                </button>
+              </div>
+            ) : (
+              <div style={{ position: "relative" }}>
+                <input value={searchQuery} onChange={e => handleTickerChange(e.target.value)}
+                  onBlur={() => setTimeout(() => setSuggestions([]), 200)}
+                  placeholder="🔍 종목 검색 (예: NVDA, 애플)" autoComplete="off"
+                  style={{ width: "100%", padding: "14px 16px", borderRadius: 12, background: "#f5f7fa", border: "1.5px solid var(--border)", fontSize: 15, fontWeight: 700 }} />
+                
+                {suggestions.length > 0 && (
+                  <div style={{ position: "absolute", top: "100%", left: 0, right: 0, zIndex: 100, background: "#fff", borderRadius: 12, border: "1px solid var(--border)", boxShadow: "0 10px 30px rgba(0,0,0,0.15)", marginTop: 6, maxHeight: "280px", overflowY: "auto" }}>
+                    {suggestions.map((sug, i) => (
+                      <div key={i} onMouseDown={() => selectSuggestion(sug)}
+                        style={{ padding: "12px 16px", cursor: "pointer", borderBottom: i < suggestions.length - 1 ? "1px solid #f3f4f6" : "none", display: "flex", flexDirection: "column", gap: 3 }}
+                        onMouseOver={e => { e.currentTarget.style.background = "#f8fafc"; }}
+                        onMouseOut={e => { e.currentTarget.style.background = "#fff"; }}>
+                        <span style={{ fontWeight: 800, fontSize: 15, color: "#1e293b" }}>{sug.ticker}</span>
+                        <span style={{ color: "var(--text-muted)", fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sug.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
             <div>
