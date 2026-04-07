@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { getSessionId } from "@/lib/session";
 import { forceUpdate } from "@/lib/forceUpdate";
+import NotificationDropdown from "@/components/NotificationDropdown";
 
 const API = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001";
 
@@ -134,27 +135,31 @@ export default function Sidebar() {
       }}>
         {/* 데스크톱 로고 */}
         <div style={{ padding: "0 14px 24px" }}>
-          <div style={{
-            display: "flex", alignItems: "center", gap: 0,
-            cursor: "default",
-          }}>
-            <span style={{
-              fontFamily: "'Georgia', 'Noto Serif KR', serif",
-              fontStyle: "italic",
-              fontWeight: 800,
-              fontSize: 22,
-              letterSpacing: "-0.5px",
-              color: "#3d1f2e",
-              lineHeight: 1,
-              transition: "transform 0.2s",
-            }}>예리</span>
-            <span style={{
-              fontSize: 20,
-              color: "var(--accent)",
-              marginLeft: 1,
-              lineHeight: 1,
-              filter: "drop-shadow(0 1px 2px rgba(232,160,191,0.4))",
-            }}>♥</span>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 0,
+              cursor: "default",
+            }}>
+              <span style={{
+                fontFamily: "'Georgia', 'Noto Serif KR', serif",
+                fontStyle: "italic",
+                fontWeight: 800,
+                fontSize: 22,
+                letterSpacing: "-0.5px",
+                color: "#3d1f2e",
+                lineHeight: 1,
+                transition: "transform 0.2s",
+              }}>예리</span>
+              <span style={{
+                fontSize: 20,
+                color: "var(--accent)",
+                marginLeft: 1,
+                lineHeight: 1,
+                filter: "drop-shadow(0 1px 2px rgba(232,160,191,0.4))",
+              }}>♥</span>
+            </div>
+            {/* 데스크톱 알림 센터 벨 */}
+            <NotificationDropdown />
           </div>
           <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 3, paddingLeft: 1, letterSpacing: "0.04em" }}>AI 투자 어시스턴트</div>
         </div>
@@ -281,25 +286,10 @@ export default function Sidebar() {
             </span>
           )}
 
-          {/* 알림 배지 (워치리스트 아닐 때도 상단에 표시) */}
-          {alertCount > 0 && !pathname.startsWith("/watchlist") && (
-            <div
-              onClick={() => router.push("/watchlist")}
-              style={{
-                width: 36, height: 36, borderRadius: 10,
-                border: "none", background: "#fff5f5",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                cursor: "pointer", position: "relative", flexShrink: 0,
-              }}
-            >
-              🔔
-              <span style={{
-                position: "absolute", top: 5, right: 5,
-                width: 8, height: 8, borderRadius: "50%",
-                background: "#ef4444",
-              }} />
-            </div>
-          )}
+          {/* 신규 알림 센터 드롭다운 */}
+          <div style={{ marginLeft: !currentPage ? "auto" : 0 }}>
+            <NotificationDropdown />
+          </div>
         </header>
       )}
 
