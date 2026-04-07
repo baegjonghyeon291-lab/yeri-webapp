@@ -57,6 +57,15 @@ interface HoldingStatus {
   };
 }
 
+interface Trade {
+  id: string;
+  type: 'buy' | 'sell';
+  date: string;
+  price: number;
+  quantity: number;
+  memo: string;
+}
+
 interface Holding {
   ticker: string;
   name: string;
@@ -64,6 +73,7 @@ interface Holding {
   avgPrice: number;
   buyDate?: string | null;
   memo?: string | null;
+  trades?: Trade[];
   currentPrice: number | null;
   changePct: number | null;
   investedAmount: number;
@@ -97,6 +107,7 @@ interface PortfolioData {
   portfolioStatus: PortfolioStatus;
   todayActions?: any[];
   message?: string;
+  healthScore?: { score: number; label: string };
 }
 
 interface HistoryComparison {
@@ -125,6 +136,10 @@ export default function PortfolioPage() {
 
   // ── 상태 ──
   const [portfolio, setPortfolio] = useState<PortfolioData | null>(null);
+  const [expandedTradeTicker, setExpandedTradeTicker] = useState<string | null>(null);
+  const [simulateTicker, setSimulateTicker] = useState<string | null>(null);
+  const [simulateData, setSimulateData] = useState<{before: PortfolioData, after: PortfolioData} | null>(null);
+  const [simLoading, setSimLoading] = useState(false);
   const [historyData, setHistoryData] = useState<HistoryComparison | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingMsg, setLoadingMsg] = useState("");
@@ -241,6 +256,60 @@ export default function PortfolioPage() {
       });
       await loadPortfolio();
     } catch (e: any) { setError(e.message); }
+  }
+
+  // ── 매매 기록 추가 ──
+  async function handleAddTrade(ticker: string, type: 'buy' | 'sell', currentPrice: number | null) {
+    const qtyStr = prompt(`[${type === 'buy' ? '매수' : '매도'} 추가]\n${ticker} 수량을 입력하세요:`, "1");
+    if (!qtyStr) return;
+    const qty = parseFloat(qtyStr);
+    if (isNaN(qty) || qty <= 0) return alert("올바른 수량을 입력하세요.");
+
+    const priceStr = prompt(`${ticker} 체결 단가를 입력하세요:`, String(currentPrice || 0));
+    if (!priceStr) return;
+    const price = parseFloat(priceStr);
+    if (isNaN(price) || price <= 0) return alert("올바른 단가를 입력하세요.");
+
+    const memo = prompt("메모를 입력하세요 (선택):", "") || "";
+
+    try {
+      const res = await fetch(`${API}/api/portfolio/${sessionId}/trades`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ticker, type, date: new Date().toISOString().split('T')[0], price, quantity: qty, memo }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error);
+      await loadPortfolio();
+    } catch (e: any) { alert(e.message); }
+  }
+
+  // ── 시뮬레이터 가상 매매 ──
+  async function handleSimulate(ticker: string, type: 'buy'|'sell', currentPrice: number | null) {
+    const qtyStr = prompt(`[시뮬레이션 - ${type === 'buy' ? '매수' : '매도'}]\n가상 거래 수량을 입력하세요:`, "10");
+    if (!qtyStr) return;
+    const quantity = parseFloat(qtyStr);
+    if (isNaN(quantity) || quantity <= 0) return alert("올바른 수량을 입력하세요.");
+
+    const priceStr = prompt(`예상 체결 단가를 입력하세요:`, String(currentPrice || 0));
+    if (!priceStr) return;
+    const price = parseFloat(priceStr);
+    if (isNaN(price) || price <= 0) return alert("올바른 단가를 입력하세요.");
+
+    setSimLoading(true);
+    setSimulateData(null);
+    setSimulateTicker(ticker);
+    try {
+      const res = await fetch(`${API}/api/portfolio/${sessionId}/simulate`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ ticker, type, quantity, price })
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error);
+      setSimulateData({ before: data.before, after: data.after });
+    } catch(e: any) { alert(e.message); setSimulateTicker(null); }
+    finally { setSimLoading(false); }
   }
 
   // ── 브리핑 ──
@@ -603,6 +672,91 @@ export default function PortfolioPage() {
                     </div>
                   </div>
                 )}
+
+                {/* 📝 매수/매도 기록 (Trade History) */}
+                <div style={{ marginTop: 12, borderTop: "1px solid #f1f5f9", paddingTop: 12 }}>
+                  <div 
+                    onClick={() => setExpandedTradeTicker(expandedTradeTicker === h.ticker ? null : h.ticker)}
+                    style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                  >
+                    <span>📝 매매 기록 ({h.trades?.length || 0}건)</span>
+                    <span>{expandedTradeTicker === h.ticker ? "▲" : "▼"}</span>
+                  </div>
+                  {expandedTradeTicker === h.ticker && (
+                    <div style={{ marginTop: 10 }}>
+                      {h.trades && h.trades.length > 0 ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
+                          {[...h.trades].reverse().map((t, idx) => (
+                            <div key={idx} style={{ display: "flex", justifyContent: "space-between", fontSize: 11, padding: "6px 8px", background: "#f8fafc", borderRadius: 6, borderLeft: `3px solid ${t.type === 'buy' ? '#10b981' : '#ef4444'}` }}>
+                              <div>
+                                <span style={{ fontWeight: 800, color: t.type === 'buy' ? '#10b981' : '#ef4444', marginRight: 6 }}>{t.type === 'buy' ? '매수' : '매도'}</span>
+                                <span style={{ color: "var(--text-muted)" }}>{t.date}</span>
+                              </div>
+                              <div style={{ fontWeight: 600 }}>{t.quantity}주 @ ${t.price}</div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 10 }}>기록된 매매 내역이 없습니다.</div>
+                      )}
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button onClick={() => handleAddTrade(h.ticker, 'buy', h.currentPrice)} style={{ flex: 1, padding: "6px", borderRadius: 6, border: "1px solid #10b981", background: "#ecfdf5", color: "#059669", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>+ 추가 매수</button>
+                        <button onClick={() => handleAddTrade(h.ticker, 'sell', h.currentPrice)} style={{ flex: 1, padding: "6px", borderRadius: 6, border: "1px solid #ef4444", background: "#fef2f2", color: "#dc2626", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>- 분할 매도</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 🧪 시뮬레이터 */}
+                <div style={{ marginTop: 12, borderTop: "1px solid #f1f5f9", paddingTop: 12 }}>
+                  <div 
+                    style={{ fontSize: 12, fontWeight: 700, color: "var(--text-secondary)", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                  >
+                    <span>🧪 시뮬레이터 (가상 매매)</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
+                    <button onClick={() => handleSimulate(h.ticker, 'buy', h.currentPrice)} disabled={simLoading} style={{ flex: 1, padding: "6px", borderRadius: 6, border: "1px solid #3b82f6", background: "#eff6ff", color: "#2563eb", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>{simLoading && simulateTicker === h.ticker ? "시뮬레이션 중..." : "+ 가상 매수"}</button>
+                    <button onClick={() => handleSimulate(h.ticker, 'sell', h.currentPrice)} disabled={simLoading} style={{ flex: 1, padding: "6px", borderRadius: 6, border: "1px solid #8b5cf6", background: "#f5f3ff", color: "#7c3aed", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>{simLoading && simulateTicker === h.ticker ? "시뮬레이션 중..." : "- 가상 매도"}</button>
+                  </div>
+                  {simulateTicker === h.ticker && simulateData && (
+                    <div style={{ marginTop: 12, padding: 12, background: "#f8fafc", borderRadius: 8, border: "1px dashed #cbd5e1" }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-primary)", marginBottom: 8, display: "flex", justifyContent: "space-between" }}>
+                        <span>📊 시뮬레이션 결과 요약</span>
+                        <span style={{ cursor: "pointer", color: "var(--text-muted)", fontSize: 14 }} onClick={() => setSimulateTicker(null)}>✕</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 4 }}>
+                        <span style={{ color: "var(--text-muted)" }}>건강도 점수</span>
+                        <span style={{ fontWeight: 700 }}>
+                          {simulateData.before.healthScore?.score}점 ➡️ <span style={{ color: (simulateData.after.healthScore?.score || 0) > (simulateData.before.healthScore?.score || 0) ? "#10b981" : (simulateData.after.healthScore?.score || 0) < (simulateData.before.healthScore?.score || 0) ? "#ef4444" : "var(--text-primary)" }}>{simulateData.after.healthScore?.score}점</span>
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 4 }}>
+                        <span style={{ color: "var(--text-muted)" }}>총 평가손익</span>
+                        <span style={{ fontWeight: 700 }}>
+                          ${simulateData.after.summary.totalProfitLoss.toLocaleString()} ({simulateData.after.summary.totalProfitLossPct}%)
+                        </span>
+                      </div>
+                      {(() => {
+                        const targetBefore = simulateData.before.holdings.find((x: Holding) => x.ticker === h.ticker);
+                        const targetAfter = simulateData.after.holdings.find((x: Holding) => x.ticker === h.ticker);
+                        return targetAfter && (
+                          <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid #e2e8f0", fontSize: 11 }}>
+                            <div style={{ color: "var(--text-muted)", marginBottom: 4 }}>해당 종목 비중:</div>
+                            <div style={{ display: "flex", justifyContent: "space-between" }}>
+                              <span style={{ color: "var(--text-muted)" }}>포트 내 비중</span>
+                              <span style={{ fontWeight: 700 }}>{targetBefore?.weight || 0}% ➡️ {targetAfter.weight}%</span>
+                            </div>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
+                              <span style={{ color: "var(--text-muted)" }}>평단가 변화</span>
+                              <span style={{ fontWeight: 700 }}>${targetBefore?.avgPrice || 0} ➡️ ${targetAfter.avgPrice}</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
+
                 {/* 데이터 시점 */}
                 {h.dataAsOf && (
                   <div style={{ fontSize: 9, color: "#94a3b8", marginTop: 6 }}>
