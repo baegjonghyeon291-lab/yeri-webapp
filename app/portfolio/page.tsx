@@ -330,6 +330,19 @@ export default function PortfolioPage() {
                 💡 <b>풀패키지 추천값</b> 버튼을 누르면 예리가 추천하는 알림 조건이 한 번에 쫙 채워져요! 알림이 오면 화면 위쪽 🔔 종 아이콘에 빨간 숫자가 뜨니까 꼭 확인해 보세요!
               </div>
             </div>
+
+            <div style={{ background: "#fff7ed", borderRadius: 8, padding: "12px 14px", border: "1px solid #fed7aa" }}>
+              <div style={{ fontWeight: 800, color: "#c2410c", fontSize: 13, marginBottom: 8 }}>💬 예시: 이런 식으로 쓰면 돼요!</div>
+              <div style={{ color: "var(--text-secondary)", fontSize: 12, marginBottom: 10, lineHeight: 1.6 }}>
+                Q. "삼성전자 1주가 8만원인데 9주 가지고 있어. 90만원 넘으면 알려줘!"
+              </div>
+              <div style={{ color: "var(--text-secondary)", fontSize: 12, marginBottom: 6, fontWeight: 700 }}>👉 이때는 두 가지 방법이 있어요:</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6, fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.6 }}>
+                <div><b>방법 1) 🚀 가격 돌파</b> — 1주 가격 기준<br/>→ '가격 돌파'에 <b>100000</b> 입력 → 삼성전자 1주가 10만원 넘는 순간 알림!</div>
+                <div><b>방법 2) 💰 총 평가금액</b> — 내 보유 합계 기준<br/>→ '총 평가금액'에 <b>900000</b> 입력 → 9주 × 현재가 합계가 90만원 넘는 순간 알림!</div>
+              </div>
+              <div style={{ marginTop: 8, fontSize: 12, color: "#c2410c", fontWeight: 600 }}>💡 둘 다 동시에 설정할 수 있으니, 원하는 조건을 마음껏 걸어두세요!</div>
+            </div>
           </div>
           
           <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px dashed #fbcfe8", color: "#b81d52", fontWeight: 700, fontSize: 13 }}>
