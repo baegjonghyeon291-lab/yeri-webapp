@@ -108,6 +108,14 @@ interface PortfolioData {
   todayActions?: any[];
   message?: string;
   healthScore?: { score: number; label: string };
+  diversification?: {
+    score: number;
+    label: string;
+    messages: string[];
+    sectors: { name: string; weight: number }[];
+    themes: { name: string; weight: number }[];
+    avgBeta: number;
+  };
 }
 
 interface HistoryComparison {
@@ -548,6 +556,46 @@ export default function PortfolioPage() {
           {ps.needCheckTop3.length > 0 && (
             <div style={{ fontSize: 12, color: "#d97706", lineHeight: 1.8 }}>
               ⚠️ 점검 필요: {ps.needCheckTop3.map(r => `${r.ticker}(${r.badge})`).join(", ")}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ═══ 포트폴리오 분산 점수 (Diversification Score) ═══ */}
+      {hasHoldings && portfolio?.diversification && (
+        <div style={{ background: "#fff", borderRadius: 16, padding: 16, border: "1px solid var(--border)", marginBottom: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <div style={{ fontSize: 14, fontWeight: 800, color: "var(--text-primary)" }}>🛡️ 포트폴리오 디펜스 (리스크 분산)</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: portfolio.diversification.score >= 80 ? "#10b981" : portfolio.diversification.score >= 60 ? "#3b82f6" : portfolio.diversification.score >= 40 ? "#f59e0b" : "#ef4444" }}>
+              {portfolio.diversification.score}점 ({portfolio.diversification.label})
+            </div>
+          </div>
+          
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginBottom: 12 }}>
+            <div style={{ flex: 1, minWidth: "140px", background: "#f8fafc", padding: "10px", borderRadius: 8 }}>
+              <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 6 }}>📊 섹터 Top 3 비중</div>
+              {portfolio.diversification.sectors.slice(0, 3).map((s, idx) => (
+                <div key={idx} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 4 }}>
+                  <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>{s.name}</span>
+                  <span style={{ fontWeight: 800 }}>{s.weight}%</span>
+                </div>
+              ))}
+              {portfolio.diversification.sectors.length === 0 && <div style={{ fontSize: 11, color: "var(--text-muted)" }}>데이터 없음</div>}
+            </div>
+            <div style={{ flex: 1, minWidth: "140px", background: "#f8fafc", padding: "10px", borderRadius: 8 }}>
+              <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 6 }}>🌊 포트폴리오 변동성 (Beta)</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: portfolio.diversification.avgBeta > 1.5 ? "#ef4444" : portfolio.diversification.avgBeta < 0.8 ? "#10b981" : "var(--text-primary)" }}>
+                {portfolio.diversification.avgBeta.toFixed(2)}
+              </div>
+              <div style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 4 }}>※ 1.0 = 시장 평균 변동성</div>
+            </div>
+          </div>
+
+          {portfolio.diversification.messages.length > 0 && (
+            <div style={{ fontSize: 12, color: "#d97706", lineHeight: 1.6, background: "#fffbeb", padding: "10px 12px", borderRadius: 8 }}>
+              {portfolio.diversification.messages.map((m, idx) => (
+                <div key={idx}>⚠️ {m}</div>
+              ))}
             </div>
           )}
         </div>
