@@ -291,7 +291,7 @@ export default function PortfolioPage() {
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     {bs && (
-                      <span style={{ padding: "4px 10px", borderRadius: 20, background: bs.bg, color: bs.color, fontSize: 11, fontWeight: 700, border: `1px solid ${bs.border}` }}>
+                      <span style={{ padding: "4px 10px", borderRadius: 20, background: bs.bg, color: bs.color, fontSize: 11, fontWeight: 700, border: `1px solid ${bs.border}`, whiteSpace: "nowrap" }}>
                         {bs.icon} {h.status!.badge}
                       </span>
                     )}
