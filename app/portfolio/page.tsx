@@ -21,7 +21,10 @@ interface Alerts {
   badgeChange: boolean;
   predictEnabled: boolean;
   predictBreakout: boolean;
+  predictMomentumUp: boolean;
   predictDump: boolean;
+  predictBadgeDown: boolean;
+  predictWeightRisk: boolean;
 }
 
 const DEFAULT_ALERTS: Alerts = {
@@ -35,7 +38,10 @@ const DEFAULT_ALERTS: Alerts = {
   badgeChange: true,
   predictEnabled: false,
   predictBreakout: false,
-  predictDump: false
+  predictMomentumUp: false,
+  predictDump: false,
+  predictBadgeDown: false,
+  predictWeightRisk: false
 };
 
 interface HoldingStatus {
@@ -286,6 +292,43 @@ export default function PortfolioPage() {
             <div>
               <div style={{ fontWeight: 800, color: "#111827", marginBottom: 2 }}>4️⃣ 4번: 맨 윗단 '총 자산과 TOP 요약판' 구경하기</div>
               <div style={{ color: "var(--text-secondary)" }}>포트폴리오 화면 맨 위쪽 예쁜 그라데이션 박스를 보면 내 주식들의 총 가치가 얼마인지, 합쳐서 플러스인지 마이너스인지 한눈에 탁 보여줍니다. 그리고 스크롤을 좀 더 내리다 보면 예리가 콕 집어 조심하라고 경고하는 '위험 종목 TOP'이나, 알아서 잘 커주고 있는 '착한 상승 종목 TOP'을 따로 모아 친절하게 요약해 줍니다.</div>
+            </div>
+
+            <div style={{ marginTop: 8, padding: "10px 14px", background: "linear-gradient(135deg, #fce7f3, #fdf2f8)", borderRadius: 10, textAlign: "center" }}>
+              <span style={{ fontSize: 14, fontWeight: 800, color: "#db2777" }}>✨ 예리가 좋아할 기능 ✨</span>
+            </div>
+
+            <div>
+              <div style={{ fontWeight: 800, color: "#111827", marginBottom: 2 }}>5️⃣ 5번: 🔔 스마트 알림 — 내 주식 감시병 세우기</div>
+              <div style={{ color: "var(--text-secondary)", marginBottom: 8 }}>종목 추가할 때 아래쪽 <b>'🔔 조건부 스마트 알림 설정'</b> 버튼을 눌러보세요! 알림은 두 종류로 나뉘어요:</div>
+              
+              <div style={{ background: "#fff", borderRadius: 8, padding: "10px 12px", marginBottom: 8, border: "1px solid #e2e8f0" }}>
+                <div style={{ fontWeight: 800, color: "#111827", fontSize: 12, marginBottom: 6 }}>🎯 조건 도달 알림 — 실제로 내가 정한 조건에 딱 도달했을 때 알려줘요!</div>
+                <ul style={{ paddingLeft: 16, margin: 0, color: "var(--text-secondary)", display: "flex", flexDirection: "column", gap: 3, fontSize: 12 }}>
+                  <li>📈 <b>수익률 목표</b>: "수익률 +20% 찍으면 알려줘!"</li>
+                  <li>📉 <b>손절 기준</b>: "-10% 되면 경고해줘!"</li>
+                  <li>🚀 <b>가격 돌파</b>: "이 주식이 $50 넘으면 알려줘!"</li>
+                  <li>🔻 <b>가격 이탈</b>: "$30 밑으로 빠지면 알려줘!"</li>
+                  <li>💰 <b>총 평가금액</b>: "내 주식 합계 $5,000 넘으면 알려줘!"</li>
+                  <li>⚖️ <b>비중 초과</b>: "포트폴리오 30% 넘으면 알려줘!"</li>
+                  <li>🚨 <b>배지 악화</b>: 상태가 '경고'나 '리스크 높음'으로 떨어지면 자동 알림!</li>
+                </ul>
+              </div>
+
+              <div style={{ background: "#fff", borderRadius: 8, padding: "10px 12px", marginBottom: 8, border: "1px solid #e2e8f0" }}>
+                <div style={{ fontWeight: 800, color: "#111827", fontSize: 12, marginBottom: 6 }}>🔮 AI 예측/사전 경고 — 아직 조건에 안 닿았지만, 곧 닿을 것 같을 때 미리 알려줘요!</div>
+                <ul style={{ paddingLeft: 16, margin: 0, color: "var(--text-secondary)", display: "flex", flexDirection: "column", gap: 3, fontSize: 12 }}>
+                  <li>📈 <b>목표가 돌파 가능성</b>: 현재가가 내 목표가의 90%까지 올라왔을 때</li>
+                  <li>🚀 <b>상승 모멘텀 강화</b>: 종합점수+추세가 강세 구간 돌입 시</li>
+                  <li>📉 <b>하락 위험 확대</b>: 종합점수 급락 또는 당일 급락 감지 시</li>
+                  <li>⚠️ <b>경고 단계 직전</b>: 종합점수가 경고 경계선(40~49)에 걸렸을 때</li>
+                  <li>⚖️ <b>비중 위험 확대</b>: 비중이 내 한도의 85% 이상 근접했을 때</li>
+                </ul>
+              </div>
+
+              <div style={{ color: "var(--text-secondary)", fontSize: 12 }}>
+                💡 <b>풀패키지 추천값</b> 버튼을 누르면 예리가 추천하는 알림 조건이 한 번에 쫙 채워져요! 알림이 오면 화면 위쪽 🔔 종 아이콘에 빨간 숫자가 뜨니까 꼭 확인해 보세요!
+              </div>
             </div>
           </div>
           
@@ -597,17 +640,38 @@ export default function PortfolioPage() {
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                       <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", cursor: "pointer" }}>
                         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                          <span style={{ fontSize: 12, color: "var(--text-primary)", fontWeight: 600 }}>목표 돌파 가능성 감지 📈</span>
-                          <span style={{ fontSize: 10, color: "var(--text-muted)" }}>차트 상승 모멘텀이 극에 달할 때 미리 경고</span>
+                          <span style={{ fontSize: 12, color: "var(--text-primary)", fontWeight: 600 }}>목표가 돌파 가능성 높아짐 📈</span>
+                          <span style={{ fontSize: 10, color: "var(--text-muted)" }}>현재가가 설정 목표가에 90% 이상 근접 시</span>
                         </div>
                         <input type="checkbox" checked={newAlerts.predictBreakout} onChange={e => setNewAlerts({...newAlerts, predictBreakout: e.target.checked})} style={{ width: 16, height: 16, accentColor: "var(--accent)" }} />
                       </label>
                       <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", cursor: "pointer" }}>
                         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                          <span style={{ fontSize: 12, color: "var(--text-primary)", fontWeight: 600 }}>하락 변동성 사전 경고 📉</span>
-                          <span style={{ fontSize: 10, color: "var(--text-muted)" }}>추세 붕괴나 경고 단계 진입 낌새가 보일 때</span>
+                          <span style={{ fontSize: 12, color: "var(--text-primary)", fontWeight: 600 }}>상승 모멘텀 강화 🚀</span>
+                          <span style={{ fontSize: 10, color: "var(--text-muted)" }}>종합점수+추세/모멘텀이 강세 구간 돌입 시</span>
+                        </div>
+                        <input type="checkbox" checked={newAlerts.predictMomentumUp} onChange={e => setNewAlerts({...newAlerts, predictMomentumUp: e.target.checked})} style={{ width: 16, height: 16, accentColor: "var(--accent)" }} />
+                      </label>
+                      <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", cursor: "pointer" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                          <span style={{ fontSize: 12, color: "var(--text-primary)", fontWeight: 600 }}>하락 위험 확대 📉</span>
+                          <span style={{ fontSize: 10, color: "var(--text-muted)" }}>종합점수 하락 또는 당일 급락 감지 시</span>
                         </div>
                         <input type="checkbox" checked={newAlerts.predictDump} onChange={e => setNewAlerts({...newAlerts, predictDump: e.target.checked})} style={{ width: 16, height: 16, accentColor: "var(--accent)" }} />
+                      </label>
+                      <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", cursor: "pointer" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                          <span style={{ fontSize: 12, color: "var(--text-primary)", fontWeight: 600 }}>경고 단계 진입 직전 ⚠️</span>
+                          <span style={{ fontSize: 10, color: "var(--text-muted)" }}>종합점수가 경고 경계선(40~49)에 진입 시</span>
+                        </div>
+                        <input type="checkbox" checked={newAlerts.predictBadgeDown} onChange={e => setNewAlerts({...newAlerts, predictBadgeDown: e.target.checked})} style={{ width: 16, height: 16, accentColor: "var(--accent)" }} />
+                      </label>
+                      <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 0", cursor: "pointer" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                          <span style={{ fontSize: 12, color: "var(--text-primary)", fontWeight: 600 }}>비중 위험 확대 중 ⚖️</span>
+                          <span style={{ fontSize: 10, color: "var(--text-muted)" }}>비중이 설정 한도의 85% 이상 근접 시</span>
+                        </div>
+                        <input type="checkbox" checked={newAlerts.predictWeightRisk} onChange={e => setNewAlerts({...newAlerts, predictWeightRisk: e.target.checked})} style={{ width: 16, height: 16, accentColor: "var(--accent)" }} />
                       </label>
                     </div>
                   )}
@@ -615,7 +679,7 @@ export default function PortfolioPage() {
 
                 {newAlerts.enabled && (
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 4 }}>
-                    <button onClick={() => setNewAlerts({...newAlerts, takeProfitPct: 20, stopLossPct: -10, maxWeight: 30, badgeChange: true, predictEnabled: true, predictDump: true, predictBreakout: true})} style={{ padding: "6px 10px", fontSize: 11, fontWeight: 700, borderRadius: 12, background: "#fce7f3", color: "#be123c", border: "none", cursor: "pointer" }}>💡 예리의 풀패키지 추천값 채우기</button>
+                    <button onClick={() => setNewAlerts({...newAlerts, takeProfitPct: 20, stopLossPct: -10, maxWeight: 30, badgeChange: true, predictEnabled: true, predictBreakout: true, predictMomentumUp: true, predictDump: true, predictBadgeDown: true, predictWeightRisk: true})} style={{ padding: "6px 10px", fontSize: 11, fontWeight: 700, borderRadius: 12, background: "#fce7f3", color: "#be123c", border: "none", cursor: "pointer" }}>💡 예리의 풀패키지 추천값 채우기</button>
                   </div>
                 )}
               </div>
