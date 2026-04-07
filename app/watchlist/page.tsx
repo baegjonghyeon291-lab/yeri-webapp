@@ -27,7 +27,7 @@ export default function WatchlistPage() {
 
   // ── 알림 상태 ──────────────────────────────────────────
   type Alert = { emoji: string; title: string; desc: string; level: string; ticker: string };
-  type StockStatus = { ticker: string; name: string; price: number | null; priceStr: string; changePct: number | null; rsi: number | null; score: number; verdict: string; suggestedAction: string; priceSource: string; error?: string };
+  type StockStatus = { ticker: string; name: string; price: number | null; priceStr: string; changePct: number | null; rsi: number | null; score: number; verdict: string; suggestedAction: string; priceSource: string; error?: string; recentNews?: {title: string; url: string; source: string; datetime: number; sentiment: string}[] };
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [stocks, setStocks] = useState<StockStatus[]>([]);
   const [alertLoading, setAlertLoading] = useState(false);
@@ -158,6 +158,37 @@ export default function WatchlistPage() {
       setList(newList);
       localStorage.setItem("yeri_watchlist", JSON.stringify(newList.map((t: string) => ({ ticker: t, addedAt: Date.now() }))));
     }
+  }
+
+  async function moveToPortfolio(ticker: string, currentPrice: number | null) {
+      const qtyStr = prompt(`${ticker}을(를) 포트폴리오에 추가합니다.\n보유 수량을 입력하세요:`, "1");
+      if (!qtyStr) return;
+      const qty = parseFloat(qtyStr);
+      if (isNaN(qty) || qty <= 0) return alert("올바른 수량을 입력하세요.");
+
+      const priceStr = prompt(`매수 평단가를 입력하세요:\n(현재가: ${currentPrice || 0})`, String(currentPrice || 0));
+      if (!priceStr) return;
+      const price = parseFloat(priceStr);
+      if (isNaN(price) || price <= 0) return alert("올바른 평단가를 입력하세요.");
+
+      try {
+          const res = await fetch(`${API}/api/portfolio/${sessionId}/add`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ticker, quantity: qty, avgPrice: price }),
+          });
+          const data = await res.json();
+          if (data.ok || data.summary) {
+              showToast(`📥 ${ticker} 포트폴리오 편입 완료!`);
+              if (confirm(`${ticker}을(를) 관심종목 목록에서는 삭제할까요?`)) {
+                  remove(ticker);
+              }
+          } else {
+              alert("포트폴리오 추가 실패: " + data.error);
+          }
+      } catch (e) {
+          alert("서버 오류가 발생했습니다.");
+      }
   }
 
   async function changeStyle(s: Style) {
@@ -453,11 +484,23 @@ export default function WatchlistPage() {
                       }}>
                         AI {st.score}/40
                       </span>
+                      {/* 포트폴리오 추가 */}
+                      <button
+                        onClick={() => moveToPortfolio(ticker, st.price)}
+                        style={{
+                          marginLeft: "auto", padding: "3px 10px", borderRadius: 20, border: "1px solid var(--border)",
+                          background: "#fff", color: "var(--text-secondary)",
+                          fontSize: 11, fontWeight: 600, cursor: "pointer",
+                        }}
+                      >
+                        📥 편입
+                      </button>
+
                       {/* 분석하기 */}
                       <button
                         onClick={() => router.push(`/chat?analyze=${ticker}`)}
                         style={{
-                          marginLeft: "auto", padding: "3px 10px", borderRadius: 20, border: "none",
+                          padding: "3px 10px", borderRadius: 20, border: "none",
                           background: "var(--accent)", color: "#fff",
                           fontSize: 11, fontWeight: 700, cursor: "pointer",
                           transition: "opacity .15s",
@@ -469,6 +512,26 @@ export default function WatchlistPage() {
                       </button>
                     </div>
                   )}
+
+                  {/* 최신 뉴스 (관심종목 뉴스 요약 카드) */}
+                  {st?.recentNews && st.recentNews.length > 0 && (
+                    <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px dashed var(--border)" }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-primary)", marginBottom: 6 }}>📰 뉴스 요약</div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        {st.recentNews.map((news, idx) => (
+                          <a key={idx} href={news.url || "#"} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "flex", alignItems: "flex-start", gap: 6 }}>
+                            <span style={{ fontSize: 10, padding: "1px 4px", borderRadius: 4, background: news.sentiment === 'POSITIVE' ? '#ecfdf5' : news.sentiment === 'NEGATIVE' ? '#fef2f2' : '#f3f4f6', color: news.sentiment === 'POSITIVE' ? '#059669' : news.sentiment === 'NEGATIVE' ? '#dc2626' : '#6b7280', flexShrink: 0, fontWeight: 700 }}>
+                              {news.sentiment === 'POSITIVE' ? '긍정' : news.sentiment === 'NEGATIVE' ? '부정' : '중립'}
+                            </span>
+                            <span style={{ fontSize: 11, color: "var(--text-secondary)", lineHeight: 1.4, wordBreak: "keep-all", display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                              {news.title}
+                            </span>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* 스캔 대기 상태 */}
                   {!st && alertUpdated && (
                     <div style={{ fontSize: 11, color: "var(--text-muted)", paddingTop: 6, borderTop: "1px solid #f3f4f6" }}>
