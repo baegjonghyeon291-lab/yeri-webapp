@@ -105,6 +105,7 @@ interface PortfolioData {
   summary: {
     holdingCount: number;
     totalInvested: number;
+    uiCurrency?: string;
     totalValue: number;
     totalProfitLoss: number;
     totalProfitLossPct: number;
@@ -522,12 +523,12 @@ export default function PortfolioPage() {
       {hasHoldings && summary && (
         <div style={{ background: "linear-gradient(135deg, #3d1f2e 0%, #d48aaa 100%)", borderRadius: 16, padding: "20px 24px", color: "#fff", marginBottom: 24, boxShadow: "0 4px 12px rgba(212,138,170,0.2)" }}>
           <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>총 자산 가치</div>
-          <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 12 }}>{summary.uiCurrency || '$'}{summary.totalValue.toLocaleString()}</div>
+          <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 12 }}>{summary?.uiCurrency || '$'}{summary.totalValue.toLocaleString()}</div>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap", rowGap: 12 }}>
             <div>
               <div style={{ fontSize: 11, opacity: 0.7 }}>총 손익</div>
               <div style={{ fontSize: 15, fontWeight: 700, color: summary.totalProfitLoss >= 0 ? "#4ade80" : "#fb7185" }}>
-                {summary.totalProfitLoss >= 0 ? "+" : ""}{summary.uiCurrency || '$'}{Math.round(summary.totalProfitLoss).toLocaleString()}
+                {summary.totalProfitLoss >= 0 ? "+" : ""}{summary?.uiCurrency || '$'}{Math.round(summary.totalProfitLoss).toLocaleString()}
               </div>
             </div>
             <div>
@@ -540,7 +541,7 @@ export default function PortfolioPage() {
               <div>
                 <div style={{ fontSize: 11, opacity: 0.7 }}>연 예상 배당금 (추정)</div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: "#fef08a" }}>
-                  {summary.uiCurrency || '$'}{Math.round(summary.totalAnnualDividend!)} ({summary.dividendYieldPct || 0}%)
+                  {summary?.uiCurrency || '$'}{Math.round(summary.totalAnnualDividend!)} ({summary.dividendYieldPct || 0}%)
                 </div>
               </div>
             )}
@@ -566,7 +567,7 @@ export default function PortfolioPage() {
                 <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>{item.label}</div>
                 {item.data ? (
                   <div style={{ fontSize: 13, fontWeight: 800, color: item.data.diff >= 0 ? "#10b981" : "#ef4444" }}>
-                    {item.data.diff >= 0 ? "▲" : "▼"}{summary.uiCurrency || '$'}{Math.abs(Math.round(item.data.diff)).toLocaleString()}
+                    {item.data.diff >= 0 ? "▲" : "▼"}{summary?.uiCurrency || '$'}{Math.abs(Math.round(item.data.diff)).toLocaleString()}
                     <div style={{ fontSize: 10, marginTop: 2 }}>({item.data.diffPct >= 0 ? "+" : ""}{item.data.diffPct.toFixed(2)}%)</div>
                   </div>
                 ) : (
@@ -577,8 +578,8 @@ export default function PortfolioPage() {
           </div>
           {historyData.max30 !== undefined && historyData.min30 !== undefined && (
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12, paddingTop: 12, borderTop: "1px dashed var(--border)", fontSize: 11, color: "var(--text-muted)" }}>
-              <div>최근 30일 최고점: <b style={{color: "#10b981"}}>{summary.uiCurrency || '$'}{Math.round(historyData.max30).toLocaleString()}</b></div>
-              <div>최근 30일 최저점: <b style={{color: "#ef4444"}}>{summary.uiCurrency || '$'}{Math.round(historyData.min30).toLocaleString()}</b></div>
+              <div>최근 30일 최고점: <b style={{color: "#10b981"}}>{summary?.uiCurrency || '$'}{Math.round(historyData.max30).toLocaleString()}</b></div>
+              <div>최근 30일 최저점: <b style={{color: "#ef4444"}}>{summary?.uiCurrency || '$'}{Math.round(historyData.min30).toLocaleString()}</b></div>
             </div>
           )}
         </div>
@@ -655,9 +656,7 @@ export default function PortfolioPage() {
       )}
 
       {/* ═══ 다가오는 배당일 ═══ */}
-      {hasHoldings && Math.max(...holdings.map(h => {
-                const cCur = (h.ticker?.endsWith('.KS') || h.ticker?.endsWith('.KQ') || /^[0-9]{6}$/.test(h.ticker || '')) ? '₩' : '$';
-                return (h.dividend?.rate || 0))) > 0 && (
+      {hasHoldings && Math.max(...holdings.map(h => (h.dividend?.rate || 0))) > 0 && (
         <div style={{ background: "#fff", borderRadius: 16, padding: 16, border: "1px solid var(--border)", marginBottom: 20 }}>
           <div style={{ fontSize: 14, fontWeight: 800, color: "var(--text-primary)", marginBottom: 12 }}>📅 배당 캘린더 (배당락일 기준)</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -674,7 +673,7 @@ export default function PortfolioPage() {
                   </div>
                   <div style={{ fontSize: 13, fontWeight: 800, color: "#ca8a04" }}>{cCur}{h.dividend!.rate} (연)</div>
                 </div>
-            ))}
+            ); })}
             {holdings.filter(h => h.dividend?.exDate).length === 0 && (
               <div style={{ fontSize: 12, color: "var(--text-muted)" }}>예정된 최신 배당락일 정보가 표기되지 않았습니다.</div>
             )}
@@ -882,7 +881,7 @@ export default function PortfolioPage() {
                       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 4 }}>
                         <span style={{ color: "var(--text-muted)" }}>총 평가손익</span>
                         <span style={{ fontWeight: 700 }}>
-                          {summary.uiCurrency || '$'}{simulateData.after.summary.totalProfitLoss.toLocaleString()} ({simulateData.after.summary.totalProfitLossPct}%)
+                          {summary?.uiCurrency || '$'}{simulateData.after.summary.totalProfitLoss.toLocaleString()} ({simulateData.after.summary.totalProfitLossPct}%)
                         </span>
                       </div>
                       {(() => {
