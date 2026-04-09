@@ -210,8 +210,8 @@ export default function PortfolioPage() {
     setError("");
     try {
       const [resPortfolio, resHistory] = await Promise.all([
-        fetch(`${API}/api/portfolio/${sessionId}`),
-        fetch(`${API}/api/portfolio/${sessionId}/history`)
+        fetch(`${API}/api/portfolio/${sessionId}`, { cache: 'no-store' }),
+        fetch(`${API}/api/portfolio/${sessionId}/history`, { cache: 'no-store' })
       ]);
       const data = await resPortfolio.json();
       const hist = await resHistory.json();
@@ -769,8 +769,8 @@ export default function PortfolioPage() {
                   )}
                 </div>
 
-                {/* 전략 문구 + 이유 */}
-                {h.status && (
+                {/* 전략 문구 + 이유 (데이터 오류 시 노출 방지) */}
+                {h.status && (h.profitLossPct == null || (h.profitLossPct > -100 && h.profitLossPct <= 1000)) && (
                   <div style={{ background: bs ? `${bs.bg}` : "#f8fafc", borderRadius: 10, padding: "10px 14px", marginBottom: 6 }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: bs?.color || "var(--text-primary)", lineHeight: 1.6, marginBottom: 4 }}>
                       💡 {h.status.strategy}
