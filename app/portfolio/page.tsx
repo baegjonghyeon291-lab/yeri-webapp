@@ -233,7 +233,8 @@ export default function PortfolioPage() {
     try {
       const res = await fetch(`${API}/api/suggest?q=${encodeURIComponent(query)}`);
       const data = await res.json();
-      if (data.ok && data.candidates?.length > 0) setSuggestions(data.candidates.slice(0, 5));
+      if (data.ok && data.candidates?.length > 0) setSuggestions(data.candidates.slice(0, 15));
+
       else setSuggestions([]);
     } catch { setSuggestions([]); }
   }, []);
