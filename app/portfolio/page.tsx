@@ -83,6 +83,12 @@ interface Holding {
   weight: number | null;
   status: HoldingStatus | null;
   dataAsOf?: string;
+  currency?: string;
+  displayAvgPrice?: number;
+  displayCurrentPrice?: number | null;
+  displayInvested?: number;
+  displayValue?: number | null;
+  displayPL?: number | null;
   dividend?: {
     yield: number | null;
     rate: number | null;
@@ -145,6 +151,18 @@ function getBadgeStyle(badge: string) {
     case "경고":     return { bg: "#fef2f2", color: "#dc2626", border: "#fca5a5", icon: "🚨" };
     default:        return { bg: "#f8fafc", color: "#64748b", border: "#e2e8f0", icon: "❓" };
   }
+}
+
+// 통화 포맷 유틸리티
+function fmt(value: number | null | undefined, cur: string): string {
+  if (value == null) return '-';
+  if (cur === '₩' || cur === 'KRW') return '₩' + Math.round(value).toLocaleString();
+  return '$' + value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function fmtNum(value: number | null | undefined, cur: string): string {
+  if (value == null) return '-';
+  if (cur === '₩' || cur === 'KRW') return Math.round(value).toLocaleString();
+  return value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 export default function PortfolioPage() {
@@ -664,14 +682,14 @@ export default function PortfolioPage() {
               .filter(h => h.dividend?.exDate)
               .sort((a, b) => new Date(a.dividend!.exDate!).getTime() - new Date(b.dividend!.exDate!).getTime())
               .map(h => {
-                const cCur = (h.ticker?.endsWith('.KS') || h.ticker?.endsWith('.KQ') || /^[0-9]{6}$/.test(h.ticker || '')) ? '₩' : '$';
+                const tickerCur = summary?.uiCurrency || '₩';
                 return (
                 <div key={`div-${h.ticker}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: "#fcf8eb", borderRadius: 8, borderLeft: "3px solid #facc15" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ fontSize: 13, fontWeight: 800, color: "#111827" }}>{h.ticker}</span>
                     <span style={{ fontSize: 11, color: "var(--text-secondary)", background: "#fff", padding: "2px 6px", borderRadius: 4 }}>{h.dividend!.exDate}</span>
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: "#ca8a04" }}>{cCur}{h.dividend!.rate} (연)</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: "#ca8a04" }}>{fmt(h.dividend!.rate, tickerCur)} (연)</div>
                 </div>
             ); })}
             {holdings.filter(h => h.dividend?.exDate).length === 0 && (
@@ -696,9 +714,9 @@ export default function PortfolioPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 20 }}>
           {holdings.map(h => {
             const bs = h.status ? getBadgeStyle(h.status.badge) : null;
-            const plSign = (h.profitLoss ?? 0) >= 0 ? "+" : "";
+            const plSign = (h.profitLossPct ?? 0) >= 0 ? "+" : "";
             const isBeginner = portfolio?.userMode === 'beginner';
-            const cCur = (h.ticker?.endsWith('.KS') || h.ticker?.endsWith('.KQ') || /^[0-9]{6}$/.test(h.ticker || '')) ? '₩' : '$';
+            const uCur = summary?.uiCurrency || '₩';
             return (
               <div key={h.ticker} style={{ background: "#fff", borderRadius: 16, padding: 16, border: `1px solid ${bs ? bs.border : "var(--border)"}`, boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
                 {/* 상단: 종목명 + 배지 */}
@@ -709,7 +727,7 @@ export default function PortfolioPage() {
                       {h.name && <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{h.name}</span>}
                     </div>
                     <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
-                      {h.quantity}주 · 평단 {cCur}{h.avgPrice} · 현재 {h.currentPrice != null ? `\${cCur}${h.currentPrice.toFixed(2)}` : "조회중"}
+                      {h.quantity}주 · 평단 {fmt(h.displayAvgPrice ?? h.avgPrice, uCur)} · 현재 {h.displayCurrentPrice != null ? fmt(h.displayCurrentPrice, uCur) : (h.currentPrice != null ? fmt(h.currentPrice, uCur) : "조회중")}
                       {h.changePct != null && <span style={{ color: h.changePct >= 0 ? "#10b981" : "#ef4444", marginLeft: 4 }}>(당일 {h.changePct >= 0 ? "+" : ""}{h.changePct.toFixed(2)}%)</span>}
                     </div>
                   </div>
@@ -727,8 +745,8 @@ export default function PortfolioPage() {
                 <div style={{ display: "flex", gap: 16, marginBottom: 10, flexWrap: "wrap", rowGap: 8 }}>
                   <div>
                     <div style={{ fontSize: 10, color: "var(--text-muted)" }}>평가손익</div>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: (h.profitLoss ?? 0) >= 0 ? "#10b981" : "#ef4444" }}>
-                      {plSign}{cCur}{h.profitLoss != null ? Math.round(h.profitLoss).toLocaleString() : "-"}
+                    <div style={{ fontSize: 15, fontWeight: 800, color: (h.profitLossPct ?? 0) >= 0 ? "#10b981" : "#ef4444" }}>
+                      {plSign}{fmt(h.displayPL ?? h.profitLoss, uCur)}
                     </div>
                   </div>
                   <div>
@@ -745,7 +763,7 @@ export default function PortfolioPage() {
                     <div style={{ paddingLeft: 12, borderLeft: "1px solid var(--border)" }}>
                       <div style={{ fontSize: 10, color: "var(--text-muted)" }}>배당 (수익률)</div>
                       <div style={{ fontSize: 15, fontWeight: 800, color: "#ca8a04" }}>
-                        {cCur}{h.dividend!.rate} ({h.dividend!.yield ? (h.dividend!.yield * 100).toFixed(2) : (((h.dividend!.rate || 0) / (h.currentPrice || 1)) * 100).toFixed(2)}%)
+                        {fmt(h.dividend!.rate, uCur)} ({h.dividend!.yield ? (h.dividend!.yield * 100).toFixed(2) : (((h.dividend!.rate || 0) / (h.currentPrice || 1)) * 100).toFixed(2)}%)
                       </div>
                     </div>
                   )}
@@ -799,23 +817,23 @@ export default function PortfolioPage() {
                     <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
                       <div style={{ flex: "1 1 30%" }}>
                          <div style={{ fontSize: 10, color: "var(--text-muted)" }}>1차 목표가</div>
-                         <div style={{ fontSize: 13, fontWeight: 700, color: "#10b981" }}>{cCur}{h.status.priceZones.tp1}</div>
+                         <div style={{ fontSize: 13, fontWeight: 700, color: "#10b981" }}>{fmt(h.status.priceZones.tp1, uCur)}</div>
                       </div>
                       <div style={{ flex: "1 1 30%" }}>
                          <div style={{ fontSize: 10, color: "var(--text-muted)" }}>2차 목표가 (Max)</div>
-                         <div style={{ fontSize: 13, fontWeight: 700, color: "#059669" }}>{cCur}{h.status.priceZones.tp2}</div>
+                         <div style={{ fontSize: 13, fontWeight: 700, color: "#059669" }}>{fmt(h.status.priceZones.tp2, uCur)}</div>
                       </div>
                       <div style={{ flex: "1 1 30%" }}>
                          <div style={{ fontSize: 10, color: "var(--text-muted)" }}>관찰 구간</div>
-                         <div style={{ fontSize: 13, fontWeight: 700, color: "#f59e0b" }}>{cCur}{h.status.priceZones.observeMin} ~ {cCur}{h.status.priceZones.observeMax}</div>
+                         <div style={{ fontSize: 13, fontWeight: 700, color: "#f59e0b" }}>{fmt(h.status.priceZones.observeMin, uCur)} ~ {fmt(h.status.priceZones.observeMax, uCur)}</div>
                       </div>
                       <div style={{ flex: "1 1 30%" }}>
                          <div style={{ fontSize: 10, color: "var(--text-muted)" }}>추세 이탈점</div>
-                         <div style={{ fontSize: 13, fontWeight: 700, color: "#ef4444" }}>{cCur}{h.status.priceZones.trendBreak}</div>
+                         <div style={{ fontSize: 13, fontWeight: 700, color: "#ef4444" }}>{fmt(h.status.priceZones.trendBreak, uCur)}</div>
                       </div>
                       <div style={{ flex: "1 1 30%" }}>
                          <div style={{ fontSize: 10, color: "var(--text-muted)" }}>손절가 (SL)</div>
-                         <div style={{ fontSize: 13, fontWeight: 700, color: "#b91c1c" }}>{cCur}{h.status.priceZones.sl}</div>
+                         <div style={{ fontSize: 13, fontWeight: 700, color: "#b91c1c" }}>{fmt(h.status.priceZones.sl, uCur)}</div>
                       </div>
                     </div>
                   </div>
@@ -840,7 +858,7 @@ export default function PortfolioPage() {
                                 <span style={{ fontWeight: 800, color: t.type === 'buy' ? '#10b981' : '#ef4444', marginRight: 6 }}>{t.type === 'buy' ? '매수' : '매도'}</span>
                                 <span style={{ color: "var(--text-muted)" }}>{t.date}</span>
                               </div>
-                              <div style={{ fontWeight: 600 }}>{t.quantity}주 @ {cCur}{t.price}</div>
+                              <div style={{ fontWeight: 600 }}>{t.quantity}주 @ {fmt(t.price, uCur)}</div>
                             </div>
                           ))}
                         </div>
@@ -896,7 +914,7 @@ export default function PortfolioPage() {
                             </div>
                             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
                               <span style={{ color: "var(--text-muted)" }}>평단가 변화</span>
-                              <span style={{ fontWeight: 700 }}>${targetBefore?.avgPrice || 0} ➡️ ${targetAfter.avgPrice}</span>
+                              <span style={{ fontWeight: 700 }}>{fmt(targetBefore?.avgPrice || 0, uCur)} ➡️ {fmt(targetAfter.avgPrice, uCur)}</span>
                             </div>
                           </div>
                         );
@@ -1216,7 +1234,7 @@ export default function PortfolioPage() {
 
                     {/* Data */}
                     <div style={{ marginTop: 12 }}>
-                      {makeRow("현재가", `$${h1.currentPrice}`, `$${h2.currentPrice}`, false, false)}
+                      {makeRow("현재가", fmt(h1.displayCurrentPrice ?? h1.currentPrice, summary?.uiCurrency || '₩'), fmt(h2.displayCurrentPrice ?? h2.currentPrice, summary?.uiCurrency || '₩'), false, false)}
                       {makeRow("당일 등락", `${h1.changePct}%`, `${h2.changePct}%`, (h1.changePct||0) > (h2.changePct||0), (h2.changePct||0) > (h1.changePct||0))}
                       {makeRow("평가 손익(%)", `${h1.profitLossPct}%`, `${h2.profitLossPct}%`, (h1.profitLossPct||0) > (h2.profitLossPct||0), (h2.profitLossPct||0) > (h1.profitLossPct||0))}
                       {makeRow("포트폴리오 비중", `${h1.weight ?? 0}%`, `${h2.weight ?? 0}%`, false, false)}
