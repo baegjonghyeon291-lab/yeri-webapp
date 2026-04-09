@@ -522,12 +522,12 @@ export default function PortfolioPage() {
       {hasHoldings && summary && (
         <div style={{ background: "linear-gradient(135deg, #3d1f2e 0%, #d48aaa 100%)", borderRadius: 16, padding: "20px 24px", color: "#fff", marginBottom: 24, boxShadow: "0 4px 12px rgba(212,138,170,0.2)" }}>
           <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>총 자산 가치</div>
-          <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 12 }}>${summary.totalValue.toLocaleString()}</div>
+          <div style={{ fontSize: 28, fontWeight: 800, marginBottom: 12 }}>{summary.uiCurrency || '$'}{summary.totalValue.toLocaleString()}</div>
           <div style={{ display: "flex", gap: 16, flexWrap: "wrap", rowGap: 12 }}>
             <div>
               <div style={{ fontSize: 11, opacity: 0.7 }}>총 손익</div>
               <div style={{ fontSize: 15, fontWeight: 700, color: summary.totalProfitLoss >= 0 ? "#4ade80" : "#fb7185" }}>
-                {summary.totalProfitLoss >= 0 ? "+" : ""}${Math.round(summary.totalProfitLoss).toLocaleString()}
+                {summary.totalProfitLoss >= 0 ? "+" : ""}{summary.uiCurrency || '$'}{Math.round(summary.totalProfitLoss).toLocaleString()}
               </div>
             </div>
             <div>
@@ -540,7 +540,7 @@ export default function PortfolioPage() {
               <div>
                 <div style={{ fontSize: 11, opacity: 0.7 }}>연 예상 배당금 (추정)</div>
                 <div style={{ fontSize: 15, fontWeight: 700, color: "#fef08a" }}>
-                  ${Math.round(summary.totalAnnualDividend!)} ({summary.dividendYieldPct || 0}%)
+                  {summary.uiCurrency || '$'}{Math.round(summary.totalAnnualDividend!)} ({summary.dividendYieldPct || 0}%)
                 </div>
               </div>
             )}
@@ -566,7 +566,7 @@ export default function PortfolioPage() {
                 <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>{item.label}</div>
                 {item.data ? (
                   <div style={{ fontSize: 13, fontWeight: 800, color: item.data.diff >= 0 ? "#10b981" : "#ef4444" }}>
-                    {item.data.diff >= 0 ? "▲" : "▼"}${Math.abs(Math.round(item.data.diff)).toLocaleString()}
+                    {item.data.diff >= 0 ? "▲" : "▼"}{summary.uiCurrency || '$'}{Math.abs(Math.round(item.data.diff)).toLocaleString()}
                     <div style={{ fontSize: 10, marginTop: 2 }}>({item.data.diffPct >= 0 ? "+" : ""}{item.data.diffPct.toFixed(2)}%)</div>
                   </div>
                 ) : (
@@ -577,8 +577,8 @@ export default function PortfolioPage() {
           </div>
           {historyData.max30 !== undefined && historyData.min30 !== undefined && (
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12, paddingTop: 12, borderTop: "1px dashed var(--border)", fontSize: 11, color: "var(--text-muted)" }}>
-              <div>최근 30일 최고점: <b style={{color: "#10b981"}}>${Math.round(historyData.max30).toLocaleString()}</b></div>
-              <div>최근 30일 최저점: <b style={{color: "#ef4444"}}>${Math.round(historyData.min30).toLocaleString()}</b></div>
+              <div>최근 30일 최고점: <b style={{color: "#10b981"}}>{summary.uiCurrency || '$'}{Math.round(historyData.max30).toLocaleString()}</b></div>
+              <div>최근 30일 최저점: <b style={{color: "#ef4444"}}>{summary.uiCurrency || '$'}{Math.round(historyData.min30).toLocaleString()}</b></div>
             </div>
           )}
         </div>
@@ -655,20 +655,24 @@ export default function PortfolioPage() {
       )}
 
       {/* ═══ 다가오는 배당일 ═══ */}
-      {hasHoldings && Math.max(...holdings.map(h => (h.dividend?.rate || 0))) > 0 && (
+      {hasHoldings && Math.max(...holdings.map(h => {
+                const cCur = (h.ticker?.endsWith('.KS') || h.ticker?.endsWith('.KQ') || /^[0-9]{6}$/.test(h.ticker || '')) ? '₩' : '$';
+                return (h.dividend?.rate || 0))) > 0 && (
         <div style={{ background: "#fff", borderRadius: 16, padding: 16, border: "1px solid var(--border)", marginBottom: 20 }}>
           <div style={{ fontSize: 14, fontWeight: 800, color: "var(--text-primary)", marginBottom: 12 }}>📅 배당 캘린더 (배당락일 기준)</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {holdings
               .filter(h => h.dividend?.exDate)
               .sort((a, b) => new Date(a.dividend!.exDate!).getTime() - new Date(b.dividend!.exDate!).getTime())
-              .map(h => (
+              .map(h => {
+                const cCur = (h.ticker?.endsWith('.KS') || h.ticker?.endsWith('.KQ') || /^[0-9]{6}$/.test(h.ticker || '')) ? '₩' : '$';
+                return (
                 <div key={`div-${h.ticker}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: "#fcf8eb", borderRadius: 8, borderLeft: "3px solid #facc15" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ fontSize: 13, fontWeight: 800, color: "#111827" }}>{h.ticker}</span>
                     <span style={{ fontSize: 11, color: "var(--text-secondary)", background: "#fff", padding: "2px 6px", borderRadius: 4 }}>{h.dividend!.exDate}</span>
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: "#ca8a04" }}>${h.dividend!.rate} (연)</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: "#ca8a04" }}>{cCur}{h.dividend!.rate} (연)</div>
                 </div>
             ))}
             {holdings.filter(h => h.dividend?.exDate).length === 0 && (
@@ -695,6 +699,7 @@ export default function PortfolioPage() {
             const bs = h.status ? getBadgeStyle(h.status.badge) : null;
             const plSign = (h.profitLoss ?? 0) >= 0 ? "+" : "";
             const isBeginner = portfolio?.userMode === 'beginner';
+            const cCur = (h.ticker?.endsWith('.KS') || h.ticker?.endsWith('.KQ') || /^[0-9]{6}$/.test(h.ticker || '')) ? '₩' : '$';
             return (
               <div key={h.ticker} style={{ background: "#fff", borderRadius: 16, padding: 16, border: `1px solid ${bs ? bs.border : "var(--border)"}`, boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
                 {/* 상단: 종목명 + 배지 */}
@@ -705,7 +710,7 @@ export default function PortfolioPage() {
                       {h.name && <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{h.name}</span>}
                     </div>
                     <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
-                      {h.quantity}주 · 평단 ${h.avgPrice} · 현재 {h.currentPrice != null ? `$${h.currentPrice.toFixed(2)}` : "조회중"}
+                      {h.quantity}주 · 평단 {cCur}{h.avgPrice} · 현재 {h.currentPrice != null ? `\${cCur}${h.currentPrice.toFixed(2)}` : "조회중"}
                       {h.changePct != null && <span style={{ color: h.changePct >= 0 ? "#10b981" : "#ef4444", marginLeft: 4 }}>(당일 {h.changePct >= 0 ? "+" : ""}{h.changePct.toFixed(2)}%)</span>}
                     </div>
                   </div>
@@ -724,7 +729,7 @@ export default function PortfolioPage() {
                   <div>
                     <div style={{ fontSize: 10, color: "var(--text-muted)" }}>평가손익</div>
                     <div style={{ fontSize: 15, fontWeight: 800, color: (h.profitLoss ?? 0) >= 0 ? "#10b981" : "#ef4444" }}>
-                      {plSign}${h.profitLoss != null ? Math.round(h.profitLoss).toLocaleString() : "-"}
+                      {plSign}{cCur}{h.profitLoss != null ? Math.round(h.profitLoss).toLocaleString() : "-"}
                     </div>
                   </div>
                   <div>
@@ -741,7 +746,7 @@ export default function PortfolioPage() {
                     <div style={{ paddingLeft: 12, borderLeft: "1px solid var(--border)" }}>
                       <div style={{ fontSize: 10, color: "var(--text-muted)" }}>배당 (수익률)</div>
                       <div style={{ fontSize: 15, fontWeight: 800, color: "#ca8a04" }}>
-                        ${h.dividend!.rate} ({h.dividend!.yield ? (h.dividend!.yield * 100).toFixed(2) : (((h.dividend!.rate || 0) / (h.currentPrice || 1)) * 100).toFixed(2)}%)
+                        {cCur}{h.dividend!.rate} ({h.dividend!.yield ? (h.dividend!.yield * 100).toFixed(2) : (((h.dividend!.rate || 0) / (h.currentPrice || 1)) * 100).toFixed(2)}%)
                       </div>
                     </div>
                   )}
@@ -795,23 +800,23 @@ export default function PortfolioPage() {
                     <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
                       <div style={{ flex: "1 1 30%" }}>
                          <div style={{ fontSize: 10, color: "var(--text-muted)" }}>1차 목표가</div>
-                         <div style={{ fontSize: 13, fontWeight: 700, color: "#10b981" }}>${h.status.priceZones.tp1}</div>
+                         <div style={{ fontSize: 13, fontWeight: 700, color: "#10b981" }}>{cCur}{h.status.priceZones.tp1}</div>
                       </div>
                       <div style={{ flex: "1 1 30%" }}>
                          <div style={{ fontSize: 10, color: "var(--text-muted)" }}>2차 목표가 (Max)</div>
-                         <div style={{ fontSize: 13, fontWeight: 700, color: "#059669" }}>${h.status.priceZones.tp2}</div>
+                         <div style={{ fontSize: 13, fontWeight: 700, color: "#059669" }}>{cCur}{h.status.priceZones.tp2}</div>
                       </div>
                       <div style={{ flex: "1 1 30%" }}>
                          <div style={{ fontSize: 10, color: "var(--text-muted)" }}>관찰 구간</div>
-                         <div style={{ fontSize: 13, fontWeight: 700, color: "#f59e0b" }}>${h.status.priceZones.observeMin} ~ ${h.status.priceZones.observeMax}</div>
+                         <div style={{ fontSize: 13, fontWeight: 700, color: "#f59e0b" }}>{cCur}{h.status.priceZones.observeMin} ~ {cCur}{h.status.priceZones.observeMax}</div>
                       </div>
                       <div style={{ flex: "1 1 30%" }}>
                          <div style={{ fontSize: 10, color: "var(--text-muted)" }}>추세 이탈점</div>
-                         <div style={{ fontSize: 13, fontWeight: 700, color: "#ef4444" }}>${h.status.priceZones.trendBreak}</div>
+                         <div style={{ fontSize: 13, fontWeight: 700, color: "#ef4444" }}>{cCur}{h.status.priceZones.trendBreak}</div>
                       </div>
                       <div style={{ flex: "1 1 30%" }}>
                          <div style={{ fontSize: 10, color: "var(--text-muted)" }}>손절가 (SL)</div>
-                         <div style={{ fontSize: 13, fontWeight: 700, color: "#b91c1c" }}>${h.status.priceZones.sl}</div>
+                         <div style={{ fontSize: 13, fontWeight: 700, color: "#b91c1c" }}>{cCur}{h.status.priceZones.sl}</div>
                       </div>
                     </div>
                   </div>
@@ -836,7 +841,7 @@ export default function PortfolioPage() {
                                 <span style={{ fontWeight: 800, color: t.type === 'buy' ? '#10b981' : '#ef4444', marginRight: 6 }}>{t.type === 'buy' ? '매수' : '매도'}</span>
                                 <span style={{ color: "var(--text-muted)" }}>{t.date}</span>
                               </div>
-                              <div style={{ fontWeight: 600 }}>{t.quantity}주 @ ${t.price}</div>
+                              <div style={{ fontWeight: 600 }}>{t.quantity}주 @ {cCur}{t.price}</div>
                             </div>
                           ))}
                         </div>
@@ -877,7 +882,7 @@ export default function PortfolioPage() {
                       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 4 }}>
                         <span style={{ color: "var(--text-muted)" }}>총 평가손익</span>
                         <span style={{ fontWeight: 700 }}>
-                          ${simulateData.after.summary.totalProfitLoss.toLocaleString()} ({simulateData.after.summary.totalProfitLossPct}%)
+                          {summary.uiCurrency || '$'}{simulateData.after.summary.totalProfitLoss.toLocaleString()} ({simulateData.after.summary.totalProfitLossPct}%)
                         </span>
                       </div>
                       {(() => {
@@ -959,7 +964,7 @@ export default function PortfolioPage() {
                 style={{ width: "100%", padding: "10px 12px", borderRadius: 8, background: "#f5f7fa", border: "1px solid var(--border)", fontSize: 14, fontWeight: 600 }} />
             </div>
             <div>
-              <div style={{ fontSize: 10, color: "var(--text-muted)", marginBottom: 4 }}>평균 단가 ($)</div>
+              <div style={{ fontSize: 10, color: "var(--text-muted)", marginBottom: 4 }}>평균 단가({newTicker?.endsWith('.KS') || /^[0-9]{6}$/.test(newTicker||'') ? '₩' : '$'})</div>
               <input type="number" inputMode="decimal" value={newPrice || ""} onChange={e => setNewPrice(Number(e.target.value))}
                 style={{ width: "100%", padding: "10px 12px", borderRadius: 8, background: "#f5f7fa", border: "1px solid var(--border)", fontSize: 14, fontWeight: 600 }} />
             </div>
@@ -1012,18 +1017,18 @@ export default function PortfolioPage() {
                       
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                         <div>
-                          <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>🚀 가격 돌파 ($)</div>
+                          <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>🚀 가격 돌파({newTicker?.endsWith('.KS') || /^[0-9]{6}$/.test(newTicker||'') ? '₩' : '$'})</div>
                           <input type="number" placeholder="목표가" value={newAlerts.priceAbove ?? ""} onChange={e => setNewAlerts({...newAlerts, priceAbove: e.target.value ? Number(e.target.value) : null})} style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid #fbcfe8", fontSize: 13 }} />
                         </div>
                         <div>
-                          <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>🔻 가격 이탈 ($)</div>
+                          <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>🔻 가격 이탈({newTicker?.endsWith('.KS') || /^[0-9]{6}$/.test(newTicker||'') ? '₩' : '$'})</div>
                           <input type="number" placeholder="이탈가" value={newAlerts.priceBelow ?? ""} onChange={e => setNewAlerts({...newAlerts, priceBelow: e.target.value ? Number(e.target.value) : null})} style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid #fbcfe8", fontSize: 13 }} />
                         </div>
                       </div>
 
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                         <div>
-                          <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>💰 총 평가금액 달성 ($)</div>
+                          <div style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>💰 총 평가금액 달성({newTicker?.endsWith('.KS') || /^[0-9]{6}$/.test(newTicker||'') ? '₩' : '$'})</div>
                           <input type="number" placeholder="(수량×단가)" value={newAlerts.totalValueAbove ?? ""} onChange={e => setNewAlerts({...newAlerts, totalValueAbove: e.target.value ? Number(e.target.value) : null})} style={{ width: "100%", padding: "8px", borderRadius: 6, border: "1px solid #fbcfe8", fontSize: 13 }} />
                         </div>
                         <div>
