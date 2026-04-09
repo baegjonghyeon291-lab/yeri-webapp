@@ -624,8 +624,13 @@ export default function PortfolioPage() {
             💡 <b>상태 배지 기준 (종목 종합 점수):</b> 상승우세(75~100) · 보통(55~74) · 주의(40~54) · 경고(25~39) · 리스크 높음(0~24)
           </div>
           {ps.needCheckTop3.length > 0 && (
-            <div style={{ fontSize: 12, color: "#d97706", lineHeight: 1.8 }}>
-              ⚠️ 점검 필요: {ps.needCheckTop3.map(r => `${r.ticker}(${r.badge})`).join(", ")}
+            <div style={{ marginTop: 8, padding: "10px 12px", background: "#fffbeb", borderRadius: 8, border: "1px solid #fef3c7" }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#d97706", marginBottom: 6 }}>⚠️ 점검이 필요한 종목</div>
+              <ul style={{ margin: 0, paddingLeft: 20, fontSize: 12, color: "#92400e", lineHeight: 1.6 }}>
+                {ps.needCheckTop3.map((r, i) => (
+                  <li key={i}><b>{r.ticker} ({r.badge})</b>: {r.reason}</li>
+                ))}
+              </ul>
             </div>
           )}
         </div>
@@ -726,9 +731,13 @@ export default function PortfolioPage() {
                       <span style={{ fontSize: 15, fontWeight: 800 }}>{h.ticker}</span>
                       {h.name && <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{h.name}</span>}
                     </div>
-                    <div style={{ fontSize: 11, color: "var(--text-muted)" }}>
-                      {h.quantity}주 · 평단 {fmt(h.displayAvgPrice ?? h.avgPrice, uCur)} · 현재 {h.displayCurrentPrice != null ? fmt(h.displayCurrentPrice, uCur) : (h.currentPrice != null ? fmt(h.currentPrice, uCur) : "조회중")}
-                      {h.changePct != null && <span style={{ color: h.changePct >= 0 ? "#10b981" : "#ef4444", marginLeft: 4 }}>(당일 {h.changePct >= 0 ? "+" : ""}{h.changePct.toFixed(2)}%)</span>}
+                    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px", fontSize: 11, color: "var(--text-muted)" }}>
+                      <span>{h.quantity}주 · 평단 {fmt(h.displayAvgPrice ?? h.avgPrice, uCur)} · 현재 {h.displayCurrentPrice != null ? fmt(h.displayCurrentPrice, uCur) : (h.currentPrice != null ? fmt(h.currentPrice, uCur) : "조회중")}</span>
+                      {h.changePct != null && (
+                        <span style={{ color: h.changePct >= 0 ? "#10b981" : "#ef4444", fontWeight: 600 }}>
+                          (당일 {h.changePct >= 0 ? "+" : ""}{h.changePct.toFixed(2)}%)
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
