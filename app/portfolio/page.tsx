@@ -8,6 +8,8 @@ const API = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001";
 interface Suggestion {
   ticker: string;
   name: string;
+  market?: string;
+  currentPrice?: number | null;
 }
 
 interface Alerts {
@@ -190,6 +192,7 @@ export default function PortfolioPage() {
   // ── 종목 추가 폼 ──
   const [newTicker, setNewTicker] = useState("");
   const [newName, setNewName] = useState("");
+  const [newMarket, setNewMarket] = useState("");
   const [newQty, setNewQty] = useState<number>(0);
   const [newPrice, setNewPrice] = useState<number>(0);
   const [newBuyDate, setNewBuyDate] = useState("");
@@ -201,6 +204,9 @@ export default function PortfolioPage() {
   const [showGuide, setShowGuide] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 선택한 종목이 KR인지 판별
+  const isNewTickerKR = newMarket === 'KR' || newTicker?.endsWith('.KS') || newTicker?.endsWith('.KQ') || /^[0-9]{6}(\.KS|\.KQ)?$/.test(newTicker || '');
 
   // ── 포트폴리오 로드 ──
   async function loadPortfolio() {
@@ -243,6 +249,7 @@ export default function PortfolioPage() {
     setSearchQuery(val);
     setNewTicker(val.toUpperCase());
     setNewName(val);
+    setNewMarket("");
     setIsConfirmedSuggestion(false);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => fetchSuggestions(val), 300);
@@ -251,6 +258,7 @@ export default function PortfolioPage() {
   function selectSuggestion(sug: Suggestion) {
     setNewTicker(sug.ticker);
     setNewName(sug.name);
+    setNewMarket(sug.market || '');
     setSearchQuery("");
     setIsConfirmedSuggestion(true);
     setSuggestions([]);
@@ -259,6 +267,11 @@ export default function PortfolioPage() {
   // ── 종목 추가 ──
   async function addHolding() {
     if (!newTicker || newQty <= 0 || newPrice <= 0) return;
+    // 국내주식 평단가 sanity check (프론트 방어)
+    if (isNewTickerKR && newPrice < 100) {
+      const confirmed = confirm(`⚠️ 국내 주식의 평균 단가가 ${newPrice}원으로 매우 낮습니다.\n원화 기준 정확한 금액을 입력하셨나요?\n(예: 삼성전자 = 약 55,000~60,000원)`);
+      if (!confirmed) return;
+    }
     setError("");
     try {
       const res = await fetch(`${API}/api/portfolio/${sessionId}/add`, {
@@ -276,8 +289,11 @@ export default function PortfolioPage() {
         setError("최대 20개 종목까지 등록 가능합니다.");
         return;
       }
+      if (data.warning) {
+        setError(data.warning);
+      }
       // 초기화 & 재로드
-      setNewTicker(""); setNewName(""); setSearchQuery(""); setIsConfirmedSuggestion(false);
+      setNewTicker(""); setNewName(""); setNewMarket(""); setSearchQuery(""); setIsConfirmedSuggestion(false);
       setNewQty(0); setNewPrice(0);
       setNewBuyDate(""); setNewMemo(""); setAddMode(false);
       setNewAlerts(DEFAULT_ALERTS); setShowAlertUI(false);
@@ -970,15 +986,29 @@ export default function PortfolioPage() {
                 
                 {suggestions.length > 0 && (
                   <div style={{ position: "absolute", top: "100%", left: 0, right: 0, zIndex: 100, background: "#fff", borderRadius: 12, border: "1px solid var(--border)", boxShadow: "0 10px 30px rgba(0,0,0,0.15)", marginTop: 6, maxHeight: "280px", overflowY: "auto" }}>
-                    {suggestions.map((sug, i) => (
+                    {suggestions.map((sug, i) => {
+                      const isKRSug = sug.market === 'KR' || sug.ticker?.endsWith('.KS') || sug.ticker?.endsWith('.KQ');
+                      return (
                       <div key={i} onMouseDown={() => selectSuggestion(sug)}
-                        style={{ padding: "12px 16px", cursor: "pointer", borderBottom: i < suggestions.length - 1 ? "1px solid #f3f4f6" : "none", display: "flex", flexDirection: "column", gap: 3 }}
+                        style={{ padding: "12px 16px", cursor: "pointer", borderBottom: i < suggestions.length - 1 ? "1px solid #f3f4f6" : "none", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}
                         onMouseOver={e => { e.currentTarget.style.background = "#f8fafc"; }}
                         onMouseOut={e => { e.currentTarget.style.background = "#fff"; }}>
-                        <span style={{ fontWeight: 800, fontSize: 15, color: "#1e293b" }}>{sug.ticker}</span>
-                        <span style={{ color: "var(--text-muted)", fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sug.name}</span>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 3, minWidth: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <span style={{ fontWeight: 800, fontSize: 15, color: "#1e293b" }}>{sug.ticker}</span>
+                            <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 5px", borderRadius: 4, background: isKRSug ? "#fef2f2" : "#eff6ff", color: isKRSug ? "#dc2626" : "#2563eb", border: `1px solid ${isKRSug ? '#fca5a5' : '#93c5fd'}` }}>
+                              {isKRSug ? '🇰🇷 KR' : '🇺🇸 US'}
+                            </span>
+                          </div>
+                          <span style={{ color: "var(--text-muted)", fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sug.name}</span>
+                        </div>
+                        {sug.currentPrice != null && (
+                          <span style={{ fontSize: 12, fontWeight: 700, color: "#059669", whiteSpace: "nowrap" }}>
+                            {isKRSug ? '₩' : '$'}{sug.currentPrice?.toLocaleString()}
+                          </span>
+                        )}
                       </div>
-                    ))}
+                    ); })}
                   </div>
                 )}
               </div>
@@ -991,11 +1021,12 @@ export default function PortfolioPage() {
                 style={{ width: "100%", padding: "10px 12px", borderRadius: 8, background: "#f5f7fa", border: "1px solid var(--border)", fontSize: 14, fontWeight: 600 }} />
             </div>
             <div>
-              <div style={{ fontSize: 10, color: "var(--text-muted)", marginBottom: 4 }}>
-                평균 단가({newTicker?.endsWith('.KS') || newTicker?.endsWith('.KQ') || /^[0-9]{6}(\.KS)?$/.test(newTicker||'') || /^[0-9]{6}(\.KQ)?$/.test(newTicker||'') ? '₩' : '$'})
+              <div style={{ fontSize: 10, color: isNewTickerKR ? "#dc2626" : "var(--text-muted)", marginBottom: 4, fontWeight: isNewTickerKR ? 700 : 400 }}>
+                평균 단가({isNewTickerKR ? '₩ 원화' : '$'})
               </div>
               <input type="number" inputMode="decimal" value={newPrice || ""} onChange={e => setNewPrice(Number(e.target.value))}
-                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, background: "#f5f7fa", border: "1px solid var(--border)", fontSize: 14, fontWeight: 600 }} />
+                placeholder={isNewTickerKR ? '예: 55000' : '예: 150.00'}
+                style={{ width: "100%", padding: "10px 12px", borderRadius: 8, background: "#f5f7fa", border: `1px solid ${isNewTickerKR ? '#fca5a5' : 'var(--border)'}`, fontSize: 14, fontWeight: 600 }} />
             </div>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
