@@ -991,7 +991,9 @@ export default function PortfolioPage() {
                 style={{ width: "100%", padding: "10px 12px", borderRadius: 8, background: "#f5f7fa", border: "1px solid var(--border)", fontSize: 14, fontWeight: 600 }} />
             </div>
             <div>
-              <div style={{ fontSize: 10, color: "var(--text-muted)", marginBottom: 4 }}>평균 단가({newTicker?.endsWith('.KS') || /^[0-9]{6}$/.test(newTicker||'') ? '₩' : '$'})</div>
+              <div style={{ fontSize: 10, color: "var(--text-muted)", marginBottom: 4 }}>
+                평균 단가({newTicker?.endsWith('.KS') || newTicker?.endsWith('.KQ') || /^[0-9]{6}(\.KS)?$/.test(newTicker||'') || /^[0-9]{6}(\.KQ)?$/.test(newTicker||'') ? '₩' : '$'})
+              </div>
               <input type="number" inputMode="decimal" value={newPrice || ""} onChange={e => setNewPrice(Number(e.target.value))}
                 style={{ width: "100%", padding: "10px 12px", borderRadius: 8, background: "#f5f7fa", border: "1px solid var(--border)", fontSize: 14, fontWeight: 600 }} />
             </div>
