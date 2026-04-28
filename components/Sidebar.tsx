@@ -1,6 +1,5 @@
 "use client";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { getSessionId } from "@/lib/session";
 import { forceUpdate } from "@/lib/forceUpdate";
@@ -19,7 +18,6 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname  = usePathname();
-  const router    = useRouter();
   const [open, setOpen]         = useState(false);
   const [alertCount, setAlertCount] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
@@ -151,14 +149,7 @@ export default function Sidebar() {
                 color: "#3d1f2e",
                 lineHeight: 1,
                 transition: "transform 0.2s",
-              }}>예리</span>
-              <span style={{
-                fontSize: 20,
-                color: "var(--accent)",
-                marginLeft: 1,
-                lineHeight: 1,
-                filter: "drop-shadow(0 1px 2px rgba(232,160,191,0.4))",
-              }}>♥</span>
+              }}>JH</span>
             </div>
             {/* 데스크톱 알림 센터 벨 */}
             <NotificationDropdown />
@@ -269,11 +260,7 @@ export default function Sidebar() {
               color: "#3d1f2e",
               letterSpacing: "-0.3px",
               lineHeight: 1,
-            }}>예리</span>
-            <span style={{
-              fontSize: 18, color: "var(--accent)", marginLeft: 1,
-              filter: "drop-shadow(0 1px 2px rgba(232,160,191,0.4))",
-            }}>♥</span>
+            }}>JH</span>
           </div>
 
           {/* 현재 페이지 이름 */}
@@ -300,7 +287,7 @@ export default function Sidebar() {
         <div
           onClick={() => setOpen(false)}
           style={{
-            position: "fixed", inset: 0, zIndex: 300,
+            position: "fixed", inset: 0, zIndex: 9000,
             background: "rgba(0,0,0,0.45)",
             animation: "fadeIn 0.2s ease",
           }}
@@ -309,7 +296,7 @@ export default function Sidebar() {
 
       {/* 드로어 패널 */}
       <div style={{
-        position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 400,
+        position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 9999,
         width: 240, background: "#fff",
         boxShadow: "4px 0 20px rgba(0,0,0,0.15)",
         transform: open ? "translateX(0)" : "translateX(-100%)",
@@ -331,11 +318,7 @@ export default function Sidebar() {
                 fontStyle: "italic",
                 fontWeight: 800, fontSize: 22,
                 color: "#3d1f2e", letterSpacing: "-0.5px", lineHeight: 1,
-              }}>예리</span>
-              <span style={{
-                fontSize: 20, color: "var(--accent)", marginLeft: 1,
-                filter: "drop-shadow(0 1px 2px rgba(232,160,191,0.4))",
-              }}>♥</span>
+              }}>JH</span>
             </div>
             <div style={{ fontSize: 10, color: "var(--text-muted)", letterSpacing: "0.04em" }}>AI 투자 어시스턴트</div>
           </div>
@@ -449,7 +432,7 @@ export default function Sidebar() {
             <div style={{ textAlign: "center", marginBottom: 24 }}>
               <div style={{ fontSize: 42, marginBottom: 10 }}>💌</div>
               <div style={{ fontSize: 20, fontWeight: 800, color: "#831843" }}>개발자의 한마디</div>
-              <div style={{ fontSize: 12, color: "#9d174d", marginTop: 5 }}>from. 예리남편 ♥</div>
+              <div style={{ fontSize: 12, color: "#9d174d", marginTop: 5 }}>from. 종현 ♥</div>
             </div>
 
             <div style={{
@@ -459,7 +442,7 @@ export default function Sidebar() {
               fontSize: 14, lineHeight: 2.1,
               color: "#1a2233",
             }}>
-              <p>이 앱은 오로지 한명 귀염둥이 예리만을 위한 앱이며,<br />수정사항은 밑에 고객센터로 문의 주시기 바랍니다.</p>
+              <p>이 앱은 오로지 한명 귀염둥이 종현만을 위한 앱이며,<br />수정사항은 밑에 고객센터로 문의 주시기 바랍니다.</p>
               <div style={{ height: 14 }} />
               <p>하루 이용료는 <b style={{ color: "#be185d" }}>94973억원</b>이며<br />한달 이용료는 <b style={{ color: "#be185d" }}>79494343663억원</b>입니다.</p>
               <div style={{ height: 14 }} />
@@ -469,7 +452,7 @@ export default function Sidebar() {
               </p>
               <div style={{ height: 14 }} />
               <p style={{ background: "#fdf2f8", borderRadius: 12, padding: "12px 14px", border: "1px solid #fce7f3" }}>
-                📞 고객센터: <b>010-6617-4707</b> (예리남편)<br />
+                📞 고객센터: <b>010-6617-4707</b> (종현)<br />
                 <span style={{ fontSize: 12, color: "var(--text-secondary)" }}>고객센터 직원이 1명이라 문의 고객이 많을 시 대기 시간이 발생할 수 있습니다 ㅎ</span>
               </p>
             </div>
