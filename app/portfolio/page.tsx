@@ -4,6 +4,14 @@ import { getSessionId } from "@/lib/session";
 import LoadingOverlay from "@/components/LoadingOverlay";
 
 const API = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001";
+const PORTFOLIO_BACKUP_KEY = 'yeri_portfolio_raw';
+
+function savePortfolioBackup(rawHoldings: unknown[]) {
+  try { localStorage.setItem(PORTFOLIO_BACKUP_KEY, JSON.stringify(rawHoldings)); } catch {}
+}
+function loadPortfolioBackup(): unknown[] {
+  try { return JSON.parse(localStorage.getItem(PORTFOLIO_BACKUP_KEY) || '[]'); } catch { return []; }
+}
 
 interface Suggestion {
   ticker: string;
@@ -219,8 +227,29 @@ export default function PortfolioPage() {
         fetch(`${API}/api/portfolio/${sessionId}`, { cache: 'no-store' }),
         fetch(`${API}/api/portfolio/${sessionId}/history`, { cache: 'no-store' })
       ]);
-      const data = await resPortfolio.json();
+      let data = await resPortfolio.json();
       const hist = await resHistory.json();
+
+      // 서버에 데이터가 있으면 localStorage에 백업 저장
+      if (data.rawHoldings?.length > 0) {
+        savePortfolioBackup(data.rawHoldings);
+      }
+
+      // 서버가 비어있지만 로컬 백업이 있으면 자동 복원
+      if ((!data.holdings || data.holdings.length === 0)) {
+        const backup = loadPortfolioBackup();
+        if (backup.length > 0) {
+          setLoadingMsg("서버 재시작 감지 — 데이터 복원 중...");
+          await fetch(`${API}/api/portfolio/${sessionId}/restore`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ holdings: backup }),
+          });
+          data = await fetch(`${API}/api/portfolio/${sessionId}`, { cache: 'no-store' }).then(r => r.json());
+          if (data.rawHoldings?.length > 0) savePortfolioBackup(data.rawHoldings);
+        }
+      }
+
       setPortfolio(data);
       if (hist.comparison) setHistoryData(hist.comparison);
     } catch (e: any) {
@@ -292,6 +321,8 @@ export default function PortfolioPage() {
       if (data.warning) {
         setError(data.warning);
       }
+      // 즉시 백업 (loadPortfolio 이전에도 안전하게 보존)
+      if (data.holdings?.length > 0) savePortfolioBackup(data.holdings);
       // 초기화 & 재로드
       setNewTicker(""); setNewName(""); setNewMarket(""); setSearchQuery(""); setIsConfirmedSuggestion(false);
       setNewQty(0); setNewPrice(0);
@@ -406,10 +437,10 @@ export default function PortfolioPage() {
         <div style={{ position: "relative", background: "#fdf8fa", borderRadius: 12, border: "1px solid #fce7f3", padding: "24px 24px 34px", marginBottom: 20, fontSize: 13, boxShadow: "0 2px 10px rgba(219,39,119,0.05)", maxHeight: "65vh", overflowY: "auto", overscrollBehavior: "contain" }}>
           <button onClick={() => setShowGuide(false)} style={{ position: "absolute", top: 16, right: 16, background: "rgba(219,39,119,0.1)", border: "none", borderRadius: "50%", width: 28, height: 28, cursor: "pointer", color: "#db2777", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>✕</button>
           
-          <div style={{ fontWeight: 800, color: "#db2777", fontSize: 15, marginBottom: 16 }}>💖 귀요미 예리를 위한 포트폴리오 설명서 💖</div>
+          <div style={{ fontWeight: 800, color: "#db2777", fontSize: 15, marginBottom: 16 }}>💖 귀요미 종현을 위한 포트폴리오 설명서 💖</div>
           
           <div style={{ display: "flex", flexDirection: "column", gap: 12, color: "var(--text-primary)", lineHeight: 1.6 }}>
-            <p>주식 투자는 생물이라 타이밍이 생명! 내가 산 주식들을 언제 더 사고 언제 이익을 챙겨야 할지, 예리의 AI 엔진이 내 상황에 딱 맞춰서 실시간으로 1:1 과외를 해드립니다. 차근차근 살펴볼까요?</p>
+            <p>주식 투자는 생물이라 타이밍이 생명! 내가 산 주식들을 언제 더 사고 언제 이익을 챙겨야 할지, 종현의 AI 엔진이 내 상황에 딱 맞춰서 실시간으로 1:1 과외를 해드립니다. 차근차근 살펴볼까요?</p>
             
             <div>
               <div style={{ fontWeight: 800, color: "#111827", marginBottom: 2 }}>1️⃣ 1번: 내 서랍장에 산 돈이랑 주식 채워 넣기</div>
@@ -418,7 +449,7 @@ export default function PortfolioPage() {
 
             <div>
               <div style={{ fontWeight: 800, color: "#111827", marginBottom: 2 }}>2️⃣ 2번: 건강 검진표! 알록달록 상태 배지 확인하기</div>
-              <div style={{ color: "var(--text-secondary)" }}>주식을 등록해 두면 예리가 재무제표, 사람들의 관심도, 요새 주식 차트를 바탕으로 7가지 깐깐한 X-ray 검사를 해서 5단계의 배지를 척척 달아줍니다!</div>
+              <div style={{ color: "var(--text-secondary)" }}>주식을 등록해 두면 종현이 재무제표, 사람들의 관심도, 요새 주식 차트를 바탕으로 7가지 깐깐한 X-ray 검사를 해서 5단계의 배지를 척척 달아줍니다!</div>
               <ul style={{ paddingLeft: 16, margin: "6px 0 0 0", color: "var(--text-secondary)", display: "flex", flexDirection: "column", gap: 4 }}>
                 <li>🟢 <b>상승 우세</b>: 오르는 힘이 아주 튼튼해요! 쭉 들고 가도 좋아요.</li>
                 <li>🟡 <b>보통</b>: 오를지 내릴지 눈치 보며 얌전하게 횡보하고 있어요.</li>
@@ -429,17 +460,17 @@ export default function PortfolioPage() {
             </div>
 
             <div>
-              <div style={{ fontWeight: 800, color: "#111827", marginBottom: 2 }}>3️⃣ 3번: 내 돈 상황에 딱 맞춘 '예리의 특급 전략' 읽기</div>
-              <div style={{ color: "var(--text-secondary)" }}>종목 카드 안쪽을 꼼꼼히 보면 예리가 써준 길쭉한 문장이 있어요. 이 글은 아무렇게나 뜨는 게 아니라, 내가 수익을 보는지 물렸는지 <b>평단가 상황</b>을 파악해서 <span style={{color:"#db2777", fontWeight:600}}>"수익이 크니까 얼른 챙기세요!"</span> 혹은 <span style={{color:"#059669", fontWeight:600}}>"물려있지만 반등 기미가 오니 조금 더 사보세요!"</span> 하고 방향을 1:1로 지도해주는 거랍니다. 제일 중요한 부분이에요!</div>
+              <div style={{ fontWeight: 800, color: "#111827", marginBottom: 2 }}>3️⃣ 3번: 내 돈 상황에 딱 맞춘 '종현의 특급 전략' 읽기</div>
+              <div style={{ color: "var(--text-secondary)" }}>종목 카드 안쪽을 꼼꼼히 보면 종현이 써준 길쭉한 문장이 있어요. 이 글은 아무렇게나 뜨는 게 아니라, 내가 수익을 보는지 물렸는지 <b>평단가 상황</b>을 파악해서 <span style={{color:"#db2777", fontWeight:600}}>"수익이 크니까 얼른 챙기세요!"</span> 혹은 <span style={{color:"#059669", fontWeight:600}}>"물려있지만 반등 기미가 오니 조금 더 사보세요!"</span> 하고 방향을 1:1로 지도해주는 거랍니다. 제일 중요한 부분이에요!</div>
             </div>
 
             <div>
               <div style={{ fontWeight: 800, color: "#111827", marginBottom: 2 }}>4️⃣ 4번: 맨 윗단 '총 자산과 TOP 요약판' 구경하기</div>
-              <div style={{ color: "var(--text-secondary)" }}>포트폴리오 화면 맨 위쪽 예쁜 그라데이션 박스를 보면 내 주식들의 총 가치가 얼마인지, 합쳐서 플러스인지 마이너스인지 한눈에 탁 보여줍니다. 그리고 스크롤을 좀 더 내리다 보면 예리가 콕 집어 조심하라고 경고하는 '위험 종목 TOP'이나, 알아서 잘 커주고 있는 '착한 상승 종목 TOP'을 따로 모아 친절하게 요약해 줍니다.</div>
+              <div style={{ color: "var(--text-secondary)" }}>포트폴리오 화면 맨 위쪽 예쁜 그라데이션 박스를 보면 내 주식들의 총 가치가 얼마인지, 합쳐서 플러스인지 마이너스인지 한눈에 탁 보여줍니다. 그리고 스크롤을 좀 더 내리다 보면 종현이 콕 집어 조심하라고 경고하는 '위험 종목 TOP'이나, 알아서 잘 커주고 있는 '착한 상승 종목 TOP'을 따로 모아 친절하게 요약해 줍니다.</div>
             </div>
 
             <div style={{ marginTop: 8, padding: "10px 14px", background: "linear-gradient(135deg, #fce7f3, #fdf2f8)", borderRadius: 10, textAlign: "center" }}>
-              <span style={{ fontSize: 14, fontWeight: 800, color: "#db2777" }}>✨ 예리가 좋아할 기능 ✨</span>
+              <span style={{ fontSize: 14, fontWeight: 800, color: "#db2777" }}>✨ 종현이 좋아할 기능 ✨</span>
             </div>
 
             <div>
@@ -471,7 +502,7 @@ export default function PortfolioPage() {
               </div>
 
               <div style={{ color: "var(--text-secondary)", fontSize: 12 }}>
-                💡 <b>풀패키지 추천값</b> 버튼을 누르면 예리가 추천하는 알림 조건이 한 번에 쫙 채워져요! 알림이 오면 화면 위쪽 🔔 종 아이콘에 빨간 숫자가 뜨니까 꼭 확인해 보세요!
+                💡 <b>풀패키지 추천값</b> 버튼을 누르면 종현이 추천하는 알림 조건이 한 번에 쫙 채워져요! 알림이 오면 화면 위쪽 🔔 종 아이콘에 빨간 숫자가 뜨니까 꼭 확인해 보세요!
               </div>
             </div>
 
@@ -505,17 +536,17 @@ export default function PortfolioPage() {
 
             <div>
               <div style={{ fontWeight: 800, color: "#111827", marginBottom: 2 }}>9️⃣ 9번: 🛡️ 계란 나누어 담기! 포트폴리오 디펜스</div>
-              <div style={{ color: "var(--text-secondary)" }}>내 주식들이 한 테마에만 너무 쏠려 있지 않은지, 시장이 흔들릴 때 방어가 될지 예리가 <b>100점 만점으로 계산</b>해서 알려주고 팁을 드립니다.</div>
+              <div style={{ color: "var(--text-secondary)" }}>내 주식들이 한 테마에만 너무 쏠려 있지 않은지, 시장이 흔들릴 때 방어가 될지 종현이 <b>100점 만점으로 계산</b>해서 알려주고 팁을 드립니다.</div>
             </div>
 
             <div>
               <div style={{ fontWeight: 800, color: "#111827", marginBottom: 2 }}>🔟 10번: 🌱 복잡한 게 싫다면 초보자 모드</div>
-              <div style={{ color: "var(--text-secondary)" }}>숫자나 지표가 너무 많아 어지럽다면? 왼쪽 메뉴의 '설정'에서 <b>초보자 모드</b>를 켜시면 예리가 심플하게 핵심 요약만 보여드립니다.</div>
+              <div style={{ color: "var(--text-secondary)" }}>숫자나 지표가 너무 많아 어지럽다면? 왼쪽 메뉴의 '설정'에서 <b>초보자 모드</b>를 켜시면 종현이 심플하게 핵심 요약만 보여드립니다.</div>
             </div>
           </div>
           
           <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px dashed #fbcfe8", color: "#b81d52", fontWeight: 700, fontSize: 13 }}>
-            💌 포트폴리오 기능을 사용하면서 오류나 추가적인 기능이 필요하다면 예리남편 종현이한테 바로 카톡 보내주세요.
+            💌 포트폴리오 기능을 사용하면서 오류나 추가적인 기능이 필요하다면 종현한테 바로 카톡 보내주세요.
           </div>
         </div>
       )}
@@ -1158,7 +1189,7 @@ export default function PortfolioPage() {
 
                 {newAlerts.enabled && (
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 4 }}>
-                    <button onClick={() => setNewAlerts({...newAlerts, takeProfitPct: 20, stopLossPct: -10, maxWeight: 30, badgeChange: true, predictEnabled: true, predictBreakout: true, predictMomentumUp: true, predictDump: true, predictBadgeDown: true, predictWeightRisk: true})} style={{ padding: "6px 10px", fontSize: 11, fontWeight: 700, borderRadius: 12, background: "#fce7f3", color: "#be123c", border: "none", cursor: "pointer" }}>💡 예리의 풀패키지 추천값 채우기</button>
+                    <button onClick={() => setNewAlerts({...newAlerts, takeProfitPct: 20, stopLossPct: -10, maxWeight: 30, badgeChange: true, predictEnabled: true, predictBreakout: true, predictMomentumUp: true, predictDump: true, predictBadgeDown: true, predictWeightRisk: true})} style={{ padding: "6px 10px", fontSize: 11, fontWeight: 700, borderRadius: 12, background: "#fce7f3", color: "#be123c", border: "none", cursor: "pointer" }}>💡 종현의 풀패키지 추천값 채우기</button>
                   </div>
                 )}
               </div>
