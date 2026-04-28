@@ -9,26 +9,55 @@ interface HotStock {
   changePct: number | null;
 }
 
+interface MarketMood {
+  fearGreed: { score: number; ratingKr: string; prev1Week: number } | null;
+  vix: string | null;
+  usdKrw: number | null;
+  status: string;
+}
+
 interface Props {
   onAnalyze: (ticker: string) => void;
   recentTickers: string[];
+}
+
+function FearGreedBar({ score }: { score: number }) {
+  const color = score >= 76 ? "#dc2626" : score >= 56 ? "#f97316" : score >= 46 ? "#eab308" : score >= 26 ? "#3b82f6" : "#6366f1";
+  const label = score >= 76 ? "극도의 탐욕" : score >= 56 ? "탐욕" : score >= 46 ? "중립" : score >= 26 ? "공포" : "극도의 공포";
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: 12, fontWeight: 700, color }}>Fear & Greed: {score}</span>
+        <span style={{ fontSize: 11, color, fontWeight: 600 }}>{label}</span>
+      </div>
+      <div style={{ height: 6, background: "#f1f5f9", borderRadius: 99, overflow: "hidden" }}>
+        <div style={{ height: "100%", width: `${score}%`, background: color, borderRadius: 99, transition: "width 0.6s ease" }} />
+      </div>
+    </div>
+  );
 }
 
 export default function HomeDashboard({ onAnalyze, recentTickers }: Props) {
   const [hotStocks, setHotStocks] = useState<HotStock[]>([]);
   const [watchlist, setWatchlist] = useState<{ ticker: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mood, setMood] = useState<MarketMood | null>(null);
 
   useEffect(() => {
-    // 1. 핫 종목 패치
     const API = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001";
-    fetch(`${API}/api/hot-stocks`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.ok && data.data) setHotStocks(data.data);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    const userId = (() => { try { return JSON.parse(localStorage.getItem('yeri_session') || '{}').userId || 'default'; } catch { return 'default'; } })();
+
+    // 1. 핫 종목 + 대시보드 동시 패치
+    Promise.allSettled([
+      fetch(`${API}/api/hot-stocks`).then(r => r.json()),
+      fetch(`${API}/api/dashboard/${userId}`).then(r => r.json()),
+    ]).then(([hotRes, dashRes]) => {
+      if (hotRes.status === 'fulfilled' && hotRes.value.ok) setHotStocks(hotRes.value.data);
+      if (dashRes.status === 'fulfilled' && dashRes.value.ok) {
+        const m = dashRes.value.market;
+        setMood({ fearGreed: m?.fearGreed ?? null, vix: m?.vix ?? null, usdKrw: m?.usdKrw ?? null, status: m?.status ?? '보통 (중립)' });
+      }
+    }).finally(() => setLoading(false));
 
     // 2. 관심종목 로드
     try {
@@ -39,6 +68,36 @@ export default function HomeDashboard({ onAnalyze, recentTickers }: Props) {
 
   return (
     <div style={{ padding: "10px 16px 20px 16px", display: "flex", flexDirection: "column", gap: 24 }}>
+      {/* 0. 시장 심리 위젯 */}
+      {mood && (
+        <section>
+          <div style={{ background: "linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 16, padding: "14px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 13, fontWeight: 800, color: "#1a2233" }}>오늘 시장 분위기</span>
+              <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{mood.status}</span>
+            </div>
+            {mood.fearGreed && <FearGreedBar score={mood.fearGreed.score} />}
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              {mood.vix != null && (
+                <span style={{ fontSize: 11, color: "var(--text-secondary)", background: "#f1f5f9", borderRadius: 8, padding: "3px 8px" }}>
+                  VIX <b style={{ color: "#1a2233" }}>{mood.vix}</b>
+                </span>
+              )}
+              {mood.usdKrw != null && (
+                <span style={{ fontSize: 11, color: "var(--text-secondary)", background: "#f1f5f9", borderRadius: 8, padding: "3px 8px" }}>
+                  달러 <b style={{ color: "#1a2233" }}>{mood.usdKrw.toLocaleString()}원</b>
+                </span>
+              )}
+              {mood.fearGreed?.prev1Week != null && (
+                <span style={{ fontSize: 11, color: "var(--text-secondary)", background: "#f1f5f9", borderRadius: 8, padding: "3px 8px" }}>
+                  1주전 <b style={{ color: "#1a2233" }}>{mood.fearGreed.prev1Week}</b>
+                </span>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* 1. 오늘 핫 종목 */}
       <section>
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
