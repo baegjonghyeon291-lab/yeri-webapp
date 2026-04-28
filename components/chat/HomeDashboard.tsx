@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getSessionId } from "@/lib/session";
 
 interface HotStock {
   ticker: string;
@@ -45,7 +46,7 @@ export default function HomeDashboard({ onAnalyze, recentTickers }: Props) {
 
   useEffect(() => {
     const API = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001";
-    const userId = (() => { try { return JSON.parse(localStorage.getItem('yeri_session') || '{}').userId || 'default'; } catch { return 'default'; } })();
+    const userId = getSessionId();
 
     // 1. 핫 종목 + 대시보드 동시 패치
     Promise.allSettled([
