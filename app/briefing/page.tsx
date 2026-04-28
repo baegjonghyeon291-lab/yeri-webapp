@@ -227,10 +227,15 @@ export default function BriefingPage() {
     }
   }, [sessionId]);
 
-  // 브리핑 캐시 저장
+  // 브리핑 캐시 저장 — 실제 브리핑(300자 초과)만 저장, 에러 메시지는 저장 안 함
+  const isRealBriefing = (r: string) => r.length > 300 && !r.includes('데이터 수집에 문제') && !r.includes('잠시 후 다시 시도');
   useEffect(() => {
-    if (marketReport || watchlistReport) {
-      localStorage.setItem("yeri_briefing", JSON.stringify({ market: marketReport, watchlist: watchlistReport }));
+    const toSave: Record<string, string> = {};
+    if (marketReport && isRealBriefing(marketReport)) toSave.market = marketReport;
+    if (watchlistReport && isRealBriefing(watchlistReport)) toSave.watchlist = watchlistReport;
+    if (Object.keys(toSave).length > 0) {
+      const existing = JSON.parse(localStorage.getItem("yeri_briefing") || "{}");
+      localStorage.setItem("yeri_briefing", JSON.stringify({ ...existing, ...toSave }));
     }
   }, [marketReport, watchlistReport]);
 
