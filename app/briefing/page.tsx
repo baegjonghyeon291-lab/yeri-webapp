@@ -286,7 +286,20 @@ export default function BriefingPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetchWithTimeout(`${API}/api/briefing/${sessionId}`);
+      // POST로 티커 직접 전달 — Render 재시작으로 서버 watchlist 유실돼도 동작
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 90000);
+      let res: Response;
+      try {
+        res = await fetch(`${API}/api/briefing/watchlist`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tickers: watchlist }),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timer);
+      }
       const data = await res.json();
       if (data.error) throw new Error(data.error);
       if (data.empty) {
@@ -294,12 +307,15 @@ export default function BriefingPage() {
         return;
       }
       setWatchlistReport(data.report || "");
-      setWatchlist(data.list || []);
       if (!data.report) {
         setError("브리핑 데이터를 받았지만 보고서가 비어 있습니다. 잠시 후 다시 시도해주세요.");
       }
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "알 수 없는 오류");
+      if (e instanceof Error && e.name === "AbortError") {
+        setError("요청 시간이 초과됐어요. 서버가 막 깨어났을 수 있으니 잠시 후 다시 시도해주세요.");
+      } else {
+        setError(e instanceof Error ? e.message : "알 수 없는 오류");
+      }
     } finally {
       setLoading(false);
     }
