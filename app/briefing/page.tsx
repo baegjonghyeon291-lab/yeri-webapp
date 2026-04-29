@@ -216,13 +216,21 @@ export default function BriefingPage() {
       } catch {}
     }
 
-    // 브리핑 캐시 복원
+    // 브리핑 캐시 복원 — 에러 메시지는 불러오지 않음
+    const isRealBriefing = (r: string) => r.length > 300 && !r.includes('데이터 수집에 문제') && !r.includes('잠시 후 다시 시도');
     const savedBriefing = localStorage.getItem("yeri_briefing");
     if (savedBriefing) {
       try {
         const parsed = JSON.parse(savedBriefing);
-        if (parsed.market) setMarketReport(parsed.market);
-        if (parsed.watchlist) setWatchlistReport(parsed.watchlist);
+        if (parsed.market && isRealBriefing(parsed.market)) setMarketReport(parsed.market);
+        if (parsed.watchlist && isRealBriefing(parsed.watchlist)) setWatchlistReport(parsed.watchlist);
+        // 기존 캐시에 에러 메시지가 있으면 삭제
+        if ((parsed.market && !isRealBriefing(parsed.market)) || (parsed.watchlist && !isRealBriefing(parsed.watchlist))) {
+          const cleaned: Record<string, string> = {};
+          if (parsed.market && isRealBriefing(parsed.market)) cleaned.market = parsed.market;
+          if (parsed.watchlist && isRealBriefing(parsed.watchlist)) cleaned.watchlist = parsed.watchlist;
+          localStorage.setItem("yeri_briefing", JSON.stringify(cleaned));
+        }
       } catch {}
     }
   }, [sessionId]);
