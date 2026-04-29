@@ -16,6 +16,7 @@ try {
 } catch { /* dev 환경 */ }
 
 const version = `jhyr-${hash}-${Date.now()}`;
-sw = sw.replace('__SW_VERSION__', version);
+// __SW_VERSION__ 플레이스홀더이든 이전 빌드로 이미 교체된 값이든 항상 새 버전으로 덮어씀
+sw = sw.replace(/__SW_VERSION__|'jhyr-[^']*'/, `'${version}'`);
 fs.writeFileSync(swPath, sw, 'utf-8');
 console.log(`[SW] Version stamped: ${version}`);
