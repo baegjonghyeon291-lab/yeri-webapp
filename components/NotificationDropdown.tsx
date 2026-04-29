@@ -62,9 +62,8 @@ export default function NotificationDropdown() {
     if (isOpen) { setIsOpen(false); return; }
     if (btnRef.current) {
       const r = btnRef.current.getBoundingClientRect();
-      // right: 화면 오른쪽 끝에서 버튼 오른쪽까지 거리
-      const rightGap = window.innerWidth - r.right;
-      setDropPos({ top: r.bottom + 8, right: Math.max(rightGap, 8) });
+      const vw = typeof window !== "undefined" ? window.innerWidth : 390;
+      setDropPos({ top: r.bottom + 8, right: Math.max(vw - r.right, 8) });
     }
     setIsOpen(true);
   };
@@ -85,7 +84,7 @@ export default function NotificationDropdown() {
     } catch {}
   };
 
-  const dropWidth = Math.min(340, window.innerWidth - 24);
+  const dropWidth = typeof window !== "undefined" ? Math.min(340, window.innerWidth - 24) : 320;
 
   return (
     <div style={{ position: "relative" }}>
