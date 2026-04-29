@@ -27,7 +27,7 @@ const TYPE_META: Record<string, { icon: string; color: string; bg: string; label
 export default function NotificationDropdown() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [dropPos, setDropPos] = useState({ top: 0, right: 0 });
+  const [dropPos, setDropPos] = useState<{ top: number; left?: number; right?: number }>({ top: 0, left: 0 });
   const btnRef = useRef<HTMLButtonElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
   const sessionId = getSessionId();
@@ -63,7 +63,15 @@ export default function NotificationDropdown() {
     if (btnRef.current) {
       const r = btnRef.current.getBoundingClientRect();
       const vw = typeof window !== "undefined" ? window.innerWidth : 390;
-      setDropPos({ top: r.bottom + 8, right: Math.max(vw - r.right, 8) });
+      const dw = Math.min(340, vw - 24);
+      // 버튼이 화면 오른쪽 절반: 오른쪽 정렬 / 왼쪽 절반: 왼쪽 정렬
+      if (r.left + r.width / 2 > vw / 2) {
+        setDropPos({ top: r.bottom + 8, right: Math.max(vw - r.right, 8) });
+      } else {
+        // 왼쪽 사이드바: 버튼 왼쪽 끝에서 열되 화면 밖 안 나가게
+        const left = Math.min(r.left, vw - dw - 8);
+        setDropPos({ top: r.bottom + 8, left: Math.max(left, 8) });
+      }
     }
     setIsOpen(true);
   };
@@ -120,7 +128,7 @@ export default function NotificationDropdown() {
           style={{
             position: "fixed",
             top: dropPos.top,
-            right: dropPos.right,
+            ...(dropPos.left !== undefined ? { left: dropPos.left } : { right: dropPos.right }),
             zIndex: 99999,
             width: dropWidth,
             maxHeight: "70vh",
