@@ -124,8 +124,9 @@ export default function Sidebar() {
     );
   };
 
-  // ── 데스크톱 사이드바 ────────────────────────────────────────────
-  if (!isMobile) {
+  // ── 데스크톱 사이드바 (/chat 페이지 제외 — ChatLayout이 position:fixed로 전체 커버하므로 드로어 모드 강제)
+  const isChatPage = pathname.startsWith("/chat");
+  if (!isMobile && !isChatPage) {
     return (
       <aside style={{
         width: 192, background: "var(--bg-sidebar)",
@@ -212,8 +213,6 @@ export default function Sidebar() {
 
   // ── 모바일: 드로어 ────────────────────────────────────────────────
   const currentPage = navItems.find(n => pathname.startsWith(n.href));
-  // /chat 페이지는 ChatLayout이 자체 헤더를 보유(position:fixed) → Sidebar 헤더 생략
-  const isChatPage = pathname.startsWith("/chat");
 
   return (
     <>
