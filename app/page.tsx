@@ -36,9 +36,6 @@ export default function Home() {
         </h1>
       </div>
 
-      <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 16 }}>
-        귀요미 종현 하이 💖 <b>종현이의 투자 요약 브리핑</b>입니다.
-      </div>
 
       {/* ── 위젯 1: 시장 요약 ── */}
       <div style={{ background: "#fff", borderRadius: 16, padding: 20, marginBottom: 16, boxShadow: "0 2px 10px rgba(0,0,0,0.03)", border: "1px solid #fce7f3" }}>
