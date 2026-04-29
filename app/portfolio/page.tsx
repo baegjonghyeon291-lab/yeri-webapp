@@ -341,6 +341,11 @@ export default function PortfolioPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ticker }),
       });
+      // localStorage 백업에서도 즉시 제거 (복원 로직이 되살리는 것 방지)
+      const backup = loadPortfolioBackup();
+      const upper = ticker.toUpperCase();
+      const updated = backup.filter((h: any) => (h.ticker || '').toUpperCase() !== upper);
+      savePortfolioBackup(updated);
       await loadPortfolio();
     } catch (e: any) { setError(e.message); }
   }
