@@ -8,7 +8,7 @@ import AlertManager from "@/components/AlertManager";
 
 export const metadata: Metadata = {
   title: "JH♡YR",
-  description: "AI 투자 어시스턴트 — 예리",
+  description: "AI 투자 어시스턴트 — 종현",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

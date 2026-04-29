@@ -37,7 +37,7 @@ export default function Home() {
       </div>
 
       <div style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 16 }}>
-        귀요미 예리 하이 💖 <b>종현이의 투자 요약 브리핑</b>입니다.
+        귀요미 종현 하이 💖 <b>종현이의 투자 요약 브리핑</b>입니다.
       </div>
 
       {/* ── 위젯 1: 시장 요약 ── */}

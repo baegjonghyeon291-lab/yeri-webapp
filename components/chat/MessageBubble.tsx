@@ -1,4 +1,4 @@
-// 말풍선 컴포넌트 — 예리 채팅 UI / 모바일 투자판단형 분석 카드
+// 말풍선 컴포넌트 — 종현 채팅 UI / 모바일 투자판단형 분석 카드
 'use client';
 import { useState } from 'react';
 
@@ -540,7 +540,7 @@ export default function MessageBubble({ message, showAvatar = true, onSend, onTo
         <div>
           {showAvatar && (
             <div style={{ fontSize: 11, fontWeight: 700, color: "#3a4a5c", marginBottom: 5, paddingLeft: 1 }}>
-              예리
+              종현
             </div>
           )}
           <AnalysisResultCard message={message} onSend={onSend} onToggleWatchlist={onToggleWatchlist} />
@@ -591,7 +591,7 @@ export default function MessageBubble({ message, showAvatar = true, onSend, onTo
       <div style={{ maxWidth: hasRichContent ? "min(88%, 420px)" : "66%", minWidth: hasRichContent ? 260 : undefined }}>
         {showAvatar && (
           <div style={{ fontSize: 11, fontWeight: 700, color: "#3a4a5c", marginBottom: 5, paddingLeft: 1 }}>
-            예리
+            종현
           </div>
         )}
 

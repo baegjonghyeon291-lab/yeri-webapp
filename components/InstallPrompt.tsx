@@ -96,7 +96,7 @@ export default function InstallPrompt() {
           {/* 텍스트 */}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ color: "#fff", fontSize: 14, fontWeight: 700, letterSpacing: "-.3px" }}>
-              예리 AI 앱 설치하기
+              종현 AI 앱 설치하기
             </div>
             <div style={{ color: "rgba(255,255,255,.65)", fontSize: 11, marginTop: 2 }}>
               홈 화면에서 바로 실행하세요

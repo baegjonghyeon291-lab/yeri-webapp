@@ -81,7 +81,7 @@ export default function ChatClient() {
       {
         role: "bot",
         content:
-          "안녕하세요! 저는 예리, AI 투자 비서예요 📈\n\n" +
+          "안녕하세요! 저는 종현, AI 투자 비서예요 📈\n\n" +
           "주식 질문, 종목 분석, 시장 상황 등 궁금한 건 뭐든 물어보세요.\n\n" +
           "아래 버튼을 눌러 바로 시작할 수도 있어요 👇",
         time: now(),

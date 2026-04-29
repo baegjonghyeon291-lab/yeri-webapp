@@ -24,7 +24,7 @@ function formatDateLabel(dateStr: string): string {
 }
 
 export default function ChatLayout({
-  messages, loading, input, onInputChange, onSend, quickButtons, title = "예리 AI", recentTickers = [],
+  messages, loading, input, onInputChange, onSend, quickButtons, title = "종현 AI", recentTickers = [],
 }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -120,7 +120,7 @@ export default function ChatLayout({
           ))}
         </button>
 
-        {/* 예리♡ 타이틀 */}
+        {/* JH 타이틀 */}
         <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
           <span style={{
             fontFamily: "'Georgia', 'Noto Serif KR', serif",
@@ -130,11 +130,7 @@ export default function ChatLayout({
             color: "#3d1f2e",
             letterSpacing: "-0.3px",
             lineHeight: 1,
-          }}>예리</span>
-          <span style={{
-            fontSize: 18, color: "var(--accent)", marginLeft: 1,
-            filter: "drop-shadow(0 1px 2px rgba(232,160,191,0.4))",
-          }}>♥</span>
+          }}>JH</span>
         </div>
 
         {/* 가운데: 봇 상태 정보 */}

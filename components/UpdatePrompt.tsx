@@ -129,7 +129,7 @@ export default function UpdatePrompt() {
           whiteSpace: "nowrap",
         }}>
           <span style={{ fontSize: 22 }}>✨</span>
-          <span>귀염둥이 예리야 업데이트 됐어!! 💕</span>
+          <span>귀염둥이 종현아 업데이트 됐어!! 💕</span>
           <style>{`
             @keyframes toastPop { from{opacity:0;bottom:40px;transform:translateX(-50%) scale(.8)} to{opacity:1;bottom:80px;transform:translateX(-50%) scale(1)} }
             @keyframes fadeOut { from{opacity:1} to{opacity:0;pointer-events:none} }
@@ -154,7 +154,7 @@ export default function UpdatePrompt() {
             <div style={{ fontSize: 56, marginBottom: 20, animation: "bounce 2s infinite" }}>💌</div>
             <h2 style={{ margin: "0 0 10px", color: "#1a1a1a", fontSize: 24, fontWeight: 800 }}>업데이트 필요</h2>
             <p style={{ margin: "0 0 8px", color: "#666", fontSize: 14, lineHeight: 1.6, wordBreak: "keep-all" }}>
-              예리 AI의 새로운 버전이 있습니다!<br/>최신 버전으로 교체해 주세요.
+              종현 AI의 새로운 버전이 있습니다!<br/>최신 버전으로 교체해 주세요.
             </p>
             <p style={{ margin: "0 0 28px", color: "#aaa", fontSize: 11 }}>
               현재: {process.env.NEXT_PUBLIC_BUILD_HASH || "dev"}
